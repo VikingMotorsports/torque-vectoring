@@ -1,13 +1,23 @@
 import math
+import matplotlib.pyplot as plt
 
 # lf (float): Distance between the center of gravity and the front axle in meters
-lf = 0.717
+lf = 0.885
 
 # lr (float): Distance between the center of gravity and the rear axle in meters
-lr = 2.5
+lr = 0.770
 
 # m (float): Mass of the vehicle in kilograms
-m = 356
+m = 222.26
+
+# Cy_f (float): Cornering stiffness of the front tires in N/rad
+Cy_f = 7085
+
+# Cy_r (float): Cornering stiffness of the rear tires in N/rad
+Cy_r = 7302
+
+# v_cg (float): Velocity of the center of gravity in m/s
+v_cg = 100
 
 def calculate_desired_yaw_rate(v_cg, delta):
     """
@@ -49,11 +59,33 @@ def calculate_yaw_rate(Cy_f, Cy_r):
     # Return the calculated yaw rate
     return Ku
 
-Cy_f = 15714
-Cy_r = 21429
-v_cg = 20
-delta = math.radians(10)
 
-desired_yaw_rate = calculate_desired_yaw_rate(v_cg, delta)
+if __name__ == '__main__':
+    # Calculate the desired yaw rate for each degree in the range of -230 to 230
+    delta_deg = range(-230, 231)
+    delta_rad = [math.radians(deg) for deg in delta_deg]
+    desired_yaw_rate = [calculate_desired_yaw_rate(v_cg, delta) for delta in delta_rad]
 
-print("Desired yaw rate:", desired_yaw_rate, "rad/s")
+    # Identify the range of angles where the desired yaw rate is between -0.5 and 0.5 rad/s
+    low_threshold = -0.5
+    high_threshold = 0.5
+    close_to_zero = [(delta_deg[i], delta_deg[i + 1]) for i in range(len(desired_yaw_rate) - 1)
+                     if low_threshold < desired_yaw_rate[i] < high_threshold and
+                     low_threshold < desired_yaw_rate[i + 1] < high_threshold]
+
+    # Plot the desired yaw rate as a function of the steering angle
+    plt.plot(delta_deg, desired_yaw_rate)
+
+    # Highlight the range of angles where the desired yaw rate is between -0.5 and 0.5 rad/s
+    for start, end in close_to_zero:
+        plt.axvspan(start, end, color='green', alpha=0.5)
+
+    # Add a caption to the plot
+    caption = "Desired Steering angle range"
+    plt.text(-100, 0.4, caption, bbox=dict(facecolor='green', alpha=0.5))
+
+    plt.xlabel("Steering angle (deg)")
+    plt.ylabel("Desired yaw rate (rad/s)")
+    plt.title
+
+    plt.show()

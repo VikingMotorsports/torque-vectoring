@@ -1,5 +1,5 @@
 import math
-import matplotlib.pyplot as plt
+import random
 
 # lf (float): Distance between the center of gravity and the front axle in meters
 lf = 0.885
@@ -17,7 +17,48 @@ Cy_f = 7085
 Cy_r = 7302
 
 # v_cg (float): Velocity of the center of gravity in m/s
-v_cg = 100
+v_cg = 1
+
+# PID Controller class for controlling the car's yaw rate
+class PIDController:
+    def __init__(self, Kp, Ki, Kd, dt):
+        self.Kp = Kp  # Proportional gain
+        self.Ki = Ki  # Integral gain
+        self.Kd = Kd  # Derivative gain
+        self.dt = dt  # Time step
+        self.previous_error = 0  # Previous error for calculating derivative term
+        self.integral = 0  # Integral of errors for calculating integral term
+
+    # Control method for calculating the control output (throttle adjustment)
+    def control(self, error):
+        """
+        Calculate the control output based on the PID controller.
+
+        Parameters:
+        error (float): The difference between the desired and current values.
+
+        Returns:
+        float: The control output.
+        """
+        self
+        self.integral += error * self.dt  # Calculate integral term
+        derivative = (error - self.previous_error) / self.dt  # Calculate derivative term
+        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative  # Calculate control output
+        self.previous_error = error  # Store current error as previous error for next iteration
+        return output  # Return control output
+
+# Function for converting degrees to radians
+def degrees_to_radians(degrees):
+    """
+        Converts an angle from degrees to radians.
+
+        Parameters:
+            degrees (float): Angle in degrees.
+
+        Returns:
+            float: Angle in radians.
+    """
+    return degrees * (math.pi / 180)
 
 def calculate_desired_yaw_rate(v_cg, delta):
     """
@@ -59,33 +100,98 @@ def calculate_yaw_rate(Cy_f, Cy_r):
     # Return the calculated yaw rate
     return Ku
 
+# Function for calculating the throttle adjustment required to reach the desired yaw rate
+def calculate_throttle_adjustment(pid_controller, current_yaw_rate, desired_yaw_rate):
+    """
+    Calculates the throttle adjustment required to reach the desired yaw rate.
+
+    Parameters:
+        pid_controller (PIDController): A PIDController object for controlling the car's yaw rate.
+        current_yaw_rate (float): The car's current yaw rate.
+        desired_yaw_rate (float): The desired yaw rate.
+
+    Returns:
+        float: Throttle adjustment required to reach the desired yaw rate.
+    """
+    error = desired_yaw_rate - current_yaw_rate  # Calculate error
+    throttle_adjustment = pid_controller.control(error)  # Calculate throttle adjustment using PID controller
+    return throttle_adjustment  # Return throttle adjustment required to reach the desired yaw rate
+
+
+def simulate(v_cg, delta_degrees):
+    """
+    Simulate the vehicle dynamics.
+
+    Parameters:
+    v_cg (float): The center of gravity velocity.
+    delta_degrees (float): The steering angle in degrees.
+
+    Returns:
+    tuple: A tuple containing longitudinal acceleration (m/s^2), lateral acceleration (m/s^2), and yaw rate (rad/s).
+    """
+    delta = degrees_to_radians(delta_degrees)
+    yaw_rate = calculate_yaw_rate(Cy_f, Cy_r)
+    ay = v_cg * yaw_rate
+    ax = v_cg ** 2 / (lf + lr) * delta
+    return ax, ay, yaw_rate
+
+
+def calculate_throttle_adjustment(pid_controller, current_yaw_rate, desired_yaw_rate):
+    """
+    Calculate the throttle adjustment based on the current and desired yaw rates.
+
+    Parameters:
+    pid_controller (PIDController): An instance of the PIDController class.
+    current_yaw_rate (float): The current yaw rate in rad/s.
+    desired_yaw_rate (float): The desired yaw rate in rad/s.
+
+    Returns:
+    float: The throttle adjustment.
+    """
+    error = desired_yaw_rate - current_yaw_rate
+    throttle_adjustment = pid_controller.control(error)
+    return throttle_adjustment
 
 if __name__ == '__main__':
-    # Calculate the desired yaw rate for each degree in the range of -230 to 230
-    delta_deg = range(-230, 231)
-    delta_rad = [math.radians(deg) for deg in delta_deg]
-    desired_yaw_rate = [calculate_desired_yaw_rate(v_cg, delta) for delta in delta_rad]
+    # Generate random steering angle and velocity for simulation
+    random_steering_angle = random.uniform(-230, 230)
+    random_velocity = random.uniform(0, 50)
 
-    # Identify the range of angles where the desired yaw rate is between -0.5 and 0.5 rad/s
-    low_threshold = -0.5
-    high_threshold = 0.5
-    close_to_zero = [(delta_deg[i], delta_deg[i + 1]) for i in range(len(desired_yaw_rate) - 1)
-                     if low_threshold < desired_yaw_rate[i] < high_threshold and
-                     low_threshold < desired_yaw_rate[i + 1] < high_threshold]
+    # Simulate vehicle dynamics with given steering angle and velocity
+    ax, ay, yaw_rate = simulate(random_velocity, random_steering_angle)
+    desired_yaw_rate = calculate_desired_yaw_rate(random_velocity, random_steering_angle)
 
-    # Plot the desired yaw rate as a function of the steering angle
-    plt.plot(delta_deg, desired_yaw_rate)
+    # Print the simulation results
+    print(f"Random steering angle (degrees): {random_steering_angle}")
+    print(f"Random velocity (m/s): {random_velocity}")
+    print(f"Longitudinal acceleration (m/s^2): {ax}")
+    print(f"Lateral acceleration (m/s^2): {ay}")
+    print(f"Yaw rate (rad/s): {yaw_rate}")
+    print(f"Desired Yaw rate (rad/s): {desired_yaw_rate}")
 
-    # Highlight the range of angles where the desired yaw rate is between -0.5 and 0.5 rad/s
-    for start, end in close_to_zero:
-        plt.axvspan(start, end, color='green', alpha=0.5)
+    # Define PID controller constants
+    Kp = 2
+    Ki = 0.3
+    Kd = 20
+    dt = 0.2
 
-    # Add a caption to the plot
-    caption = "Desired Steering angle range"
-    plt.text(-100, 0.4, caption, bbox=dict(facecolor='green', alpha=0.5))
+    # Instantiate PID controller
+    pid_controller = PIDController(Kp, Ki, Kd, dt)
 
-    plt.xlabel("Steering angle (deg)")
-    plt.ylabel("Desired yaw rate (rad/s)")
-    plt.title
+    # Calculate throttle adjustment based on yaw rate error
+    throttle_adjustment = calculate_throttle_adjustment(pid_controller, yaw_rate, desired_yaw_rate)
+    print(f"Throttle adjustment: {throttle_adjustment}")
 
-    plt.show()
+    # Define initial throttle percentages for left and right wheels
+    left_wheel_throttle = 50
+    right_wheel_throttle = 50
+
+    # Adjust throttle percentages based on calculated throttle adjustment
+    left_wheel_throttle += throttle_adjustment / 2
+    right_wheel_throttle -= throttle_adjustment / 2
+
+    # Print the final throttle percentages for left and right wheels
+    print(f"Left wheel throttle percentage: {left_wheel_throttle}")
+    print(f"Right wheel throttle percentage: {right_wheel_throttle}")
+
+

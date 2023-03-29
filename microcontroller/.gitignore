@@ -1,6 +1,9 @@
 # Generated Drivers Code
 Drivers/
 
-# Build Folders
-Debug/
-Release
+# Eclipse
+.launch
+.metadata
+.settings/
+[Dd]ebug/
+[Rr]elease/

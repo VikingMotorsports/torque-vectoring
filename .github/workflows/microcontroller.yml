@@ -1,0 +1,21 @@
+name: Microcontroller
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - uses: xanderhendriks/action-build-stm32cubeide@v7.2
+        with:
+          project-path: 'microcontroller'
+          project-target: 'microcontroller'

@@ -116,8 +116,6 @@ def calculate_throttle_adjustment(pid_controller, current_yaw_rate, desired_yaw_
     error = desired_yaw_rate - current_yaw_rate  # Calculate error
     throttle_adjustment = pid_controller.control(error)  # Calculate throttle adjustment using PID controller
     return throttle_adjustment  # Return throttle adjustment required to reach the desired yaw rate
-
-
 def simulate(v_cg, delta_degrees):
     """
     Simulate the vehicle dynamics.
@@ -134,23 +132,6 @@ def simulate(v_cg, delta_degrees):
     ay = v_cg * yaw_rate
     ax = v_cg ** 2 / (lf + lr) * delta
     return ax, ay, yaw_rate
-
-
-def calculate_throttle_adjustment(pid_controller, current_yaw_rate, desired_yaw_rate):
-    """
-    Calculate the throttle adjustment based on the current and desired yaw rates.
-
-    Parameters:
-    pid_controller (PIDController): An instance of the PIDController class.
-    current_yaw_rate (float): The current yaw rate in rad/s.
-    desired_yaw_rate (float): The desired yaw rate in rad/s.
-
-    Returns:
-    float: The throttle adjustment.
-    """
-    error = desired_yaw_rate - current_yaw_rate
-    throttle_adjustment = pid_controller.control(error)
-    return throttle_adjustment
 
 if __name__ == '__main__':
     # Generate random steering angle and velocity for simulation

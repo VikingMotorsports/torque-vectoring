@@ -116,6 +116,7 @@ def calculate_throttle_adjustment(pid_controller, current_yaw_rate, desired_yaw_
     error = desired_yaw_rate - current_yaw_rate  # Calculate error
     throttle_adjustment = pid_controller.control(error)  # Calculate throttle adjustment using PID controller
     return throttle_adjustment  # Return throttle adjustment required to reach the desired yaw rate
+
 def simulate(v_cg, delta_degrees):
     """
     Simulate the vehicle dynamics.
@@ -174,5 +175,3 @@ if __name__ == '__main__':
     # Print the final throttle percentages for left and right wheels
     print(f"Left wheel throttle percentage: {left_wheel_throttle}")
     print(f"Right wheel throttle percentage: {right_wheel_throttle}")
-
-

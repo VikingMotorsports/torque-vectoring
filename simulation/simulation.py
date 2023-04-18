@@ -114,6 +114,21 @@ def degrees_to_radians(degrees):
     """
     return degrees * (math.pi / 180)
 
+def calculate_steer_gradient():
+    """
+    Calculates the characteristics of the steering gradient
+    of the car.
+
+    Args:
+   
+    Returns:
+    float: Value that describes whether or not the car understeers
+    or oversteers.
+    """
+    Ku = ((lr * m) / (Cy_f * (lf + lr))) - ((lf * m) / (Cy_r * (lf + lr)))
+
+    return Ku
+
 def calculate_desired_yaw_rate(v_cg, delta):
     """
     Calculates the desired yaw rate of a vehicle given the velocity of the center
@@ -127,10 +142,10 @@ def calculate_desired_yaw_rate(v_cg, delta):
     float: Desired yaw rate of the vehicle in radians per second
     """
     # Calculate Ku using the existing function
-    Ku = calculate_yaw_rate(Cy_f, Cy_r)
+    # Ku = calculate_yaw_rate(Cy_f, Cy_r)
 
     # Calculate the desired yaw rate using the given formula
-    desired_yaw_rate = v_cg / ((lf + lr) + Ku * v_cg**2) * delta
+    desired_yaw_rate = (v_cg / (lf + lr) - 0.00168 * math.pow(v_cg, 2)) * delta
 
     # Return the calculated desired yaw rate
     return desired_yaw_rate
@@ -279,7 +294,8 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
     a_x = arr.array('f', [v_cg])
     a_y = arr.array('f', [0])
     wheel_velocity = arr.array('f', [w_Velocity])
-    curr_yaw_rate = arr.array('f', [0])
+    curr_yaw_rate = arr.array('f', [calculate_yaw_rate(Cy_f, Cy_r, v_cg, steering_a, rr_torqueWheel, rl_torqueWheel)])
+    des_yaw_rate = arr.array('f', [calculate_desired_yaw_rate(v_cg, steering_a)])
     rl_wheelAngularAccel = radians_to_ms((2*rl_torqueWheel) / (9 * wheelRadius))
     rr_wheelAngularAccel = radians_to_ms((2*rr_torqueWheel) / (9 * wheelRadius))
     rl_slippage = 1.0
@@ -295,7 +311,7 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
             rl_slippage = 1.0
         if rr_slippage < 1:
             rr_slippage = 1.0
-        F = magic_formula(weight, (rl_slippage + rr_slippage) / 2)
+        F = magic_formula(weight / 2, (rl_slippage + rr_slippage) / 2)
         LongAccel = (F / m) / 10
         v_cg = v_cg + LongAccel
         rl_wheelAngularVelocity = rl_slippage * v_cg
@@ -304,16 +320,16 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
         wheel_velocity.append((rl_wheelAngularVelocity + rr_wheelAngularVelocity) / 2)
         a_y.append(calculate_lateral_velocity(v_cg, steering_a))
         curr_yaw_rate.append(calculate_yaw_rate(Cy_f, Cy_r, v_cg, steering_a, rr_torqueWheel, rl_torqueWheel))
+        des_yaw_rate.append(calculate_desired_yaw_rate(v_cg, steering_a))
         i = i + 1
 
-    return a_x, a_y, wheel_velocity, curr_yaw_rate
+    return a_x, a_y, wheel_velocity, curr_yaw_rate, des_yaw_rate
 
 if __name__ == '__main__':
     
     # Simulate vehicle dynamics with given velocities, torque applied to each wheel, and steering wheel angle
-    ax, ay, wheel_velocity, yaw_rate = simulate(1, 1, 16, 16, 0)
+    ax, ay, wheel_velocity, yaw_rate, des_rate = simulate(1, 1, 4.75, 5, 0.4)
 
-    # Desired yaw rate will be compared to resulting yaw rate later...
     # desired_yaw_rate = calculate_desired_yaw_rate(random_velocity, random_steering_angle)
 
     # Calculate time
@@ -326,8 +342,7 @@ if __name__ == '__main__':
         i += 1
     
     # Display results
-    display_graphs(time, ax, ay, wheel_velocity, total_slip, yaw_rate)
-    
+    display_graphs(time, ax, ay, wheel_velocity, total_slip, yaw_rate, des_rate)
     """
     # Print the simulation results
     print(f"Random steering angle (degrees): {random_steering_angle}")

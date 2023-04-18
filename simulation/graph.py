@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def display_graphs(time, ax, ay, wheel_velocity, total_slip, yaw_rate):
+def display_graphs(time, ax, ay, wheel_velocity, total_slip, yaw_rate, des_rate):
     ax2, ax1 = plt.subplots()
     ax4, ax3 = plt.subplots()
     ax1.plot(time, wheel_velocity, label = 'Wheel Velocity')
@@ -17,4 +17,8 @@ def display_graphs(time, ax, ay, wheel_velocity, total_slip, yaw_rate):
     ax2.set_ylabel('Slippage (%)')
 
     ax3.plot(time, yaw_rate, label = 'Yaw Rate')
+    ax3.plot(time, des_rate, label = 'Des Rate')
+    ax3.legend()
+    ax3.set_ylabel('Yaw Rate (radians/s)')
+    ax3.set_xlabel('Time (s)')
     plt.show()

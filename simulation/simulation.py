@@ -68,35 +68,7 @@ Cy_r = 7302
 v_cg = 1
 
 weight = m * 9.81
-
-# PID Controller class for controlling the car's yaw rate
-class PIDController:
-    def __init__(self, Kp, Ki, Kd, dt):
-        self.Kp = Kp  # Proportional gain
-        self.Ki = Ki  # Integral gain
-        self.Kd = Kd  # Derivative gain
-        self.dt = dt  # Time step
-        self.previous_error = 0  # Previous error for calculating derivative term
-        self.integral = 0  # Integral of errors for calculating integral term
-
-    # Control method for calculating the control output (throttle adjustment)
-    def control(self, error):
-        """
-        Calculate the control output based on the PID controller.
-
-        Parameters:
-        error (float): The difference between the desired and current values.
-
-        Returns:
-        float: The control output.
-        """
-        self
-        self.integral += error * self.dt  # Calculate integral term
-        derivative = (error - self.previous_error) / self.dt  # Calculate derivative term
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative  # Calculate control output
-        self.previous_error = error  # Store current error as previous error for next iteration
-        return output  # Return control output
-    
+ 
 def radians_to_ms(radians):
     ms = radians * wheelRadius
     return ms
@@ -225,23 +197,6 @@ def calculate_delta_torque(Trr, Trl):
     #return delt_T
     return delt_T
 
-# Function for calculating the throttle adjustment required to reach the desired yaw rate
-def calculate_throttle_adjustment(pid_controller, current_yaw_rate, desired_yaw_rate):
-    """
-    Calculates the throttle adjustment required to reach the desired yaw rate.
-
-    Parameters:
-        pid_controller (PIDController): A PIDController object for controlling the car's yaw rate.
-        current_yaw_rate (float): The car's current yaw rate.
-        desired_yaw_rate (float): The desired yaw rate.
-
-    Returns:
-        float: Throttle adjustment required to reach the desired yaw rate.
-    """
-    error = desired_yaw_rate - current_yaw_rate  # Calculate error
-    throttle_adjustment = pid_controller.control(error)  # Calculate throttle adjustment using PID controller
-    return throttle_adjustment  # Return throttle adjustment required to reach the desired yaw rate
-
 def magic_formula(w, p, b=10, c=1.9, d=1, e=.97):
     """
 
@@ -301,8 +256,7 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
     rl_slippage = 1.0
     rr_slippage = 1.0
     i = 0
-    while i < 1000:
-            
+    while i < 1000: 
         rl_wheelAngularAccel = radians_to_ms((2*rl_torqueWheel) / (9 * wheelRadius))
         rr_wheelAngularAccel = radians_to_ms((2*rr_torqueWheel) / (9 * wheelRadius))
         rl_slippage = (v_cg + rl_wheelAngularAccel) / v_cg
@@ -343,37 +297,3 @@ if __name__ == '__main__':
     
     # Display results
     display_graphs(time, ax, ay, wheel_velocity, total_slip, yaw_rate, des_rate)
-    """
-    # Print the simulation results
-    print(f"Random steering angle (degrees): {random_steering_angle}")
-    print(f"Random velocity (m/s): {random_velocity}")
-    print(f"Longitudinal acceleration (m/s^2): {ax}")
-    print(f"Lateral acceleration (m/s^2): {ay}")
-    print(f"Yaw rate (rad/s): {yaw_rate}")
-    print(f"Desired Yaw rate (rad/s): {desired_yaw_rate}")
-
-    # Define PID controller constants
-    Kp = 2
-    Ki = 0.3
-    Kd = 20
-    dt = 0.2
-
-    # Instantiate PID controller
-    pid_controller = PIDController(Kp, Ki, Kd, dt)
-
-    # Calculate throttle adjustment based on yaw rate error
-    throttle_adjustment = calculate_throttle_adjustment(pid_controller, yaw_rate, desired_yaw_rate)
-    print(f"Throttle adjustment: {throttle_adjustment}")
-
-    # Define initial throttle percentages for left and right wheels
-    left_wheel_throttle = 50
-    right_wheel_throttle = 50
-
-    # Adjust throttle percentages based on calculated throttle adjustment
-    left_wheel_throttle += throttle_adjustment / 2
-    right_wheel_throttle -= throttle_adjustment / 2
-
-    # Print the final throttle percentages for left and right wheels
-    print(f"Left wheel throttle percentage: {left_wheel_throttle}")
-    print(f"Right wheel throttle percentage: {right_wheel_throttle}")
-    """

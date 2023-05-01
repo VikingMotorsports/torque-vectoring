@@ -1,7 +1,6 @@
 from simulation import *
 import pytest
 
-random_steering_angle = random.uniform(-230, 230)
 Vx = v_cg
 St_a = 0.4 # last simulate argument (steering_a)
 Trr = 5 # 4th simulate argument (rr_torqueWheel)

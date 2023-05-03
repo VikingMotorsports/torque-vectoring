@@ -5,21 +5,21 @@ from graph import display_graphs
 
 # Used Terms:
 """
-Yaw Rate: rad/s
-Longitudinal Velocity: Vx, m/s
-Cornering stiffness at rear wheel: Cy_r, N/rad
-Cornering stiffness at front wheel: Cy_f, N/rad
-Inertia Moment: Izz, Kg/m^2
-Mass: m, Kg
-Front wheelbase: lf, m
-Rear wheelbase: lr, m
-Steering Angle, St_a, degrees (Convert from radians)
-Yaw Moment: M_V, Nm
-Yaw Moment around vertical axis: Mz
-Lateral Velocity: Vy, m/s
-Gear Ratio: Gr, -
-Half the track of the car: Tr, m
-Radius of the wheel: Rw, m (0.2286)
+    Yaw Rate: rad/s
+    Longitudinal Velocity: Vx, m/s
+    Cornering stiffness at rear wheel: Cy_r, N/rad
+    Cornering stiffness at front wheel: Cy_f, N/rad
+    Inertia Moment: Izz, Kg/m^2
+    Mass: m, Kg
+    Front wheelbase: lf, m
+    Rear wheelbase: lr, m
+    Steering Angle, St_a, degrees (Convert from radians)
+    Yaw Moment: M_V, Nm
+    Yaw Moment around vertical axis: Mz
+    Lateral Velocity: Vy, m/s
+    Gear Ratio: Gr, -
+    Half the track of the car: Tr, m
+    Radius of the wheel: Rw, m (0.2286)
 """
 
 # radians/s (wheel speed)
@@ -70,6 +70,16 @@ v_cg = 1
 weight = m * 9.81
  
 def radians_to_ms(radians):
+    """
+        Converts an angular velocity from radians per second to linear velocity in meters
+        per second.
+
+        Args:
+            radians (float): Angular velocity in radians per second.
+
+        Returns:
+            ms (float): Linear velocity in meters per second.
+    """
     ms = radians * wheelRadius
     return ms
 
@@ -78,7 +88,7 @@ def degrees_to_radians(degrees):
     """
         Converts an angle from degrees to radians.
 
-        Parameters:
+        Args:
             degrees (float): Angle in degrees.
 
         Returns:
@@ -88,14 +98,19 @@ def degrees_to_radians(degrees):
 
 def calculate_steer_gradient():
     """
-    Calculates the characteristics of the steering gradient
-    of the car.
+        Calculates the characteristics of the steering gradient of the car, which
+        indicates whether the car understeers or oversteers. A positive steering
+        gradient indicates understeer, while a negative steering gradient indicates
+        oversteer. The steering gradient is influenced by factors such as the
+        vehicle's mass distribution, cornering stiffness of the front and rear tires,
+        and the distances between the center of gravity and the front and rear axles.
 
-    Args:
-   
-    Returns:
-    float: Value that describes whether or not the car understeers
-    or oversteers.
+        Args:
+            None
+
+        Returns:
+            Ku (float): Value that describes the steering gradient of the car. A positive value
+                        indicates understeer, while a negative value indicates oversteer.
     """
     Ku = ((lr * m) / (Cy_f * (lf + lr))) - ((lf * m) / (Cy_r * (lf + lr)))
 
@@ -103,15 +118,18 @@ def calculate_steer_gradient():
 
 def calculate_desired_yaw_rate(v_cg, delta):
     """
-    Calculates the desired yaw rate of a vehicle given the velocity of the center
-    of gravity and the steering angle.
+        Calculates the desired yaw rate of a vehicle given the velocity of the center
+        of gravity and the steering angle. The desired yaw rate represents the optimal
+        angular velocity around the vehicle's vertical axis for a given steering input
+        and vehicle speed. By comparing the desired yaw rate to the actual yaw rate, it
+        is possible to assess the vehicle's handling performance and stability.
 
-    Args:
-    v_cg (float): Velocity of the center of gravity in m/s
-    delta (float): Steering angle in radians in rad
+        Args:
+            v_cg (float): Velocity of the center of gravity in m/s
+            delta (float): Steering angle in radians in rad
 
-    Returns:
-    float: Desired yaw rate of the vehicle in radians per second
+        Returns:
+            desired_yaw_rate (float): Desired yaw rate of the vehicle in radians per second
     """
     # Calculate Ku using the existing function
     # Ku = calculate_yaw_rate(Cy_f, Cy_r)
@@ -124,20 +142,22 @@ def calculate_desired_yaw_rate(v_cg, delta):
 
 def calculate_yaw_rate(Cy_f, Cy_r, Vx, St_a, Trr, Trl):
     """
-    Calculates the yaw rate of a vehicle given the distance between the center
-    of gravity and the front and rear axles, the mass of the vehicle, and the
-    cornering stiffness of the front and rear tires.
+        Calculates the yaw rate of the vehicle given various parameters such as the
+        cornering stiffness of the front and rear tires, current velocity, steering angle,
+        and torque applied to the rear wheels. The yaw rate is a measure of the vehicle's
+        angular velocity around its vertical axis, and it is an important factor in
+        understanding the vehicle's handling and stability during turns.
 
-    Args:
-    Cy_f (float): Cornering stiffness of the front tires in N/rad
-    Cy_r (float): Cornering stiffness of the rear tires in N/rad
-    Vx, (float): Current velocity of car in m/s
-    St_a, (float): Current steering angle in radians
-    Trr, (float): Current power from rear right wheel in Nm
-    Trl, (float): Current power from rear left wheel in Nm
+        Args:
+            Cy_f (float): Cornering stiffness of the front tires in N/rad
+            Cy_r (float): Cornering stiffness of the rear tires in N/rad
+            Vx, (float): Current velocity of car in m/s
+            St_a, (float): Current steering angle in radians
+            Trr, (float): Current power from rear right wheel in Nm
+            Trl, (float): Current power from rear left wheel in Nm
 
-    Returns:
-    float: Yaw rate of the vehicle in radians per second
+        Returns:
+            Ku (float): Yaw rate of the vehicle in radians per second
     """
     # Calculate the yaw rate using the given formula
     Ku = ((-lf * Cy_f + lr * Cy_r) / (Izz * Vx)) - ((lf**2 * Cy_f + lr**2 * Cy_r) / (Izz * Vx)) + ((lf * Cy_f) / Izz) * St_a + (1 / 0.05 * Izz) * calculate_delta_torque(Trr, Trl)
@@ -147,15 +167,18 @@ def calculate_yaw_rate(Cy_f, Cy_r, Vx, St_a, Trr, Trl):
 
 def calculate_yaw_moment(Trr, Trl):
     """
-    Calculates the momentum of how the power ratio of each wheel
-    influences the yaw rate of the car
+        Calculates the yaw moment of the vehicle based on the torque applied to the rear
+        left and rear right wheels. The yaw moment is an important factor in determining
+        how the vehicle will respond to changes in power distribution between the wheels,
+        affecting its handling, stability, and overall performance.
 
-    Args:
-    Trr, (float): Current power from rear right wheel in Nm
-    Trl, (float): Current power from rear left wheel in Nm
+        Args:
+            Trr (float): Current torque applied to the rear right wheel in Nm.
+            Trl (float): Current torque applied to the rear left wheel in Nm.
 
-    Returns:
-    float: Yaw moment ratio
+        Returns:
+            M_V (float): Yaw moment of the vehicle in Nm, which represents the rotational
+                        force acting on the vehicle around its vertical axis.
     """
     # Calculate the yaw moment using the given formula
     M_V = (Trr - Trl) * Tr
@@ -165,14 +188,18 @@ def calculate_yaw_moment(Trr, Trl):
 
 def calculate_lateral_velocity(Vx, St_a):
     """
-    Calculates the lateral velocity of the car during turns.
+        Calculates the lateral velocity of the vehicle during turns. The lateral velocity
+        represents the sideways motion of the vehicle while cornering. A higher lateral
+        velocity indicates a greater force acting on the vehicle, which can affect its
+        stability and handling.
 
-    Args:
-    Vx, (float): Current velocity of the car in m/s
-    St_a (float): Steering angle in radians
+        Args:
+            Vx (float): Current longitudinal velocity of the vehicle in m/s.
+            St_a (float): Steering angle in radians.
 
-    Returns:
-    float: Lateral velocity (also known as lateral force)
+        Returns:
+            Vy (float): Lateral velocity of the vehicle in m/s, which represents the
+                        sideways motion of the vehicle during turns.
     """
     # Calculate the lateral velocity using the given formula
     Vy = ((-(Cy_f + Cy_r)/(m * Vx)) + (((-lf * Cy_f + lr * Cy_r)/(m * Vx)) - Vx)) + (Cy_f / (m * Vx)) * St_a
@@ -182,14 +209,17 @@ def calculate_lateral_velocity(Vx, St_a):
 
 def calculate_delta_torque(Trr, Trl):
     """
-    Calculates the difference in torque between each wheel
+        Calculates the difference in torque between the rear left and rear right wheels.
+        This difference in torque is important to understand how the vehicle will respond
+        to changes in power distribution between the wheels, which can affect the vehicle's
+        handling, stability, and overall performance.
 
-    Args:
-    Trr, (float): Current power from rear right wheel in Nm
-    Trl, (float): Current power from rear left wheel in Nm
+        Args:
+            Trr (float): Current torque applied to the rear right wheel in Nm.
+            Trl (float): Current torque applied to the rear left wheel in Nm.
 
-    Returns:
-    float: Difference in torque in Nm
+        Returns:
+            delt_T (float): Difference in torque between the rear left and rear right wheels in Nm.
     """
     # Calculate the delta torque using the given formula
     delt_T = (Rw / ((2 * Tr) * Gr)) * calculate_yaw_moment(Trr, Trl)
@@ -199,34 +229,26 @@ def calculate_delta_torque(Trr, Trl):
 
 def magic_formula(w, p, b=10, c=1.9, d=1, e=.97):
     """
+        Implements the Magic Formula, which computes the longitudinal or lateral force
+        between the tire and the road surface based on the longitudinal tire slip or
+        the wheel slip angle, respectively. The Magic Formula is widely used in tire
+        and vehicle dynamics analysis.
 
-    The magic formula [1] computes the longitudinal force between wheel and tarmac
-    in function of the longitudinal tire slip.
+        Reference:
+            [1] Pacejka, H. B. Tire and Vehicle Dynamics. Elsevier Science, 2005
 
-    [1] Pacejka, H. B. Tire and Vehicle Dynamics. Elsevier Science, 2005
+        Args:
+            w (float): Weight applied on the tire [N].
+            p (float): Tire slip ratio or slip angle.
+            b (float, optional): Stiffness factor. Default value corresponds to dry tarmac.
+            c (float, optional): Shape factor. Default value corresponds to dry tarmac.
+            d (float, optional): Peak factor. Default value corresponds to dry tarmac.
+            e (float, optional): Curvature factor. Default value corresponds to dry tarmac.
 
-    Parameters
-    ----------
-    num : int, optional
-        Number of samples to generate. Default is 50. Must be non-negative.
-    p : float
-        Weight applied on the tire [N].
-    b : float
-        Stiffness factor. Default value corresponds to dry tarmac.
-    c : float
-        Shape factor. Default value corresponds to dry tarmac.
-    d : float
-        Peak factor. Default value corresponds to dry tarmac.
-    e : float
-        Curvature factor. Default value corresponds to dry tarmac.
-
-    Returns
-    -------
-    F : float or array
-        If x is a slip ratio, Func is the longitudinal force between tire and tarmac [N], if x is a wheel slip angle, Func
-        is the lateral force.
-    alpha : float, array_like
-        Tire slip ratio or slip angle.
+        Returns:
+            F (float): Longitudinal or lateral force between the tire and the road surface [N].
+                       If 'p' is a slip ratio, F is the longitudinal force; if 'p' is a wheel
+                       slip angle, F is the lateral force.
     """
     p = p - 1
     F = w * d * math.sin(c * math.atan(b * p * (1 - e) + e * b * p - math.atan(b * p)))
@@ -234,37 +256,38 @@ def magic_formula(w, p, b=10, c=1.9, d=1, e=.97):
 
 def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
     """
-    Simulate the vehicle dynamics.
+        Simulates the vehicle dynamics given the initial conditions and returns the
+        time series of longitudinal and lateral velocities, wheel velocity, actual
+        and desired yaw rates.
 
-    Parameters:
-    v_cg (float): The center of gravity velocity in m/s.
-    w_Velocity (float): Total rear longitudinal velocity of wheels in m/s.
-    rl_torqueWheel (float): Rear left wheel torque in Nm.
-    rr_torqueWheel (float): Rear right wheel torque in Nm.
-    steering_a (float): The steering angle in radians.
+        Args:
+            v_cg (float): The initial center of gravity velocity in m/s.
+            w_Velocity (float): The initial total rear longitudinal velocity of wheels in m/s.
+            rl_torqueWheel (float): The initial rear left wheel torque in Nm.
+            rr_torqueWheel (float): The initial rear right wheel torque in Nm.
+            steering_a (float): The initial steering angle in radians.
 
-    Returns:
-    tuple: A tuple containing velocity (m/s), lateral velocity (m/s), wheel velocity (m/s), and yaw rate (radians/s)
+        Returns:
+            tuple: A tuple containing five lists:
+                   1. Longitudinal velocity (m/s) at each time step
+                   2. Lateral velocity (m/s) at each time step
+                   3. Wheel velocity (m/s) at each time step
+                   4. Actual yaw rate (radians/s) at each time step
+                   5. Desired yaw rate (radians/s) at each time step
     """
     a_x = arr.array('f', [v_cg])
     a_y = arr.array('f', [0])
     wheel_velocity = arr.array('f', [w_Velocity])
     curr_yaw_rate = arr.array('f', [calculate_yaw_rate(Cy_f, Cy_r, v_cg, steering_a, rr_torqueWheel, rl_torqueWheel)])
     des_yaw_rate = arr.array('f', [calculate_desired_yaw_rate(v_cg, steering_a)])
-    rl_wheelAngularAccel = radians_to_ms((2*rl_torqueWheel) / (9 * wheelRadius))
-    rr_wheelAngularAccel = radians_to_ms((2*rr_torqueWheel) / (9 * wheelRadius))
-    rl_slippage = 1.0
-    rr_slippage = 1.0
-    i = 0
-    while i < 1000: 
+
+    for i in range(1000):
         rl_wheelAngularAccel = radians_to_ms((2*rl_torqueWheel) / (9 * wheelRadius))
         rr_wheelAngularAccel = radians_to_ms((2*rr_torqueWheel) / (9 * wheelRadius))
         rl_slippage = (v_cg + rl_wheelAngularAccel) / v_cg
         rr_slippage = (v_cg + rr_wheelAngularAccel) / v_cg
-        if rl_slippage < 1:
-            rl_slippage = 1.0
-        if rr_slippage < 1:
-            rr_slippage = 1.0
+        rl_slippage = max(rl_slippage, 1.0)
+        rr_slippage = max(rr_slippage, 1.0)
         F = magic_formula(weight / 2, (rl_slippage + rr_slippage) / 2)
         LongAccel = (F / m) / 10
         v_cg = v_cg + LongAccel
@@ -275,7 +298,6 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
         a_y.append(calculate_lateral_velocity(v_cg, steering_a))
         curr_yaw_rate.append(calculate_yaw_rate(Cy_f, Cy_r, v_cg, steering_a, rr_torqueWheel, rl_torqueWheel))
         des_yaw_rate.append(calculate_desired_yaw_rate(v_cg, steering_a))
-        i = i + 1
 
     return a_x, a_y, wheel_velocity, curr_yaw_rate, des_yaw_rate
 

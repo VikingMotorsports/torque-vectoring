@@ -18,24 +18,24 @@ uint32_t freq = 0;
 uint32_t current_freq = 0;
 
 
-bool check_outliers(uint32_t curr_freq, uint32_t incoming_freq) {
+int check_outliers(uint32_t curr_freq, uint32_t incoming_freq) {
 	uint32_t difference = incoming_freq > curr_freq ? incoming_freq - curr_freq: curr_freq - incoming_freq;
 	float average = (incoming_freq + curr_freq) / 2.0;
 	float percent_difference = (difference / average) * 100.0;
 	if (percent_difference > OUTLIER_THRESHOLD) {
-	    return true;
+	    return 1;
 	} else {
-		return false;
+		return 0;
 	}
 }
 
-void read_freq() {
+/*void read_freq(TIM_HandleTypeDef *htim) {
 	
 	while (HAL_GPIO_ReadPin(SENSOR_PORT, SENSOR_PIN) == GPIO_PIN_RESET) {}
 	
 	current_counter = __HAL_TIM_GET_COUNTER(&htim);
 	Difference = current_counter - last_counter;
-	last_counter = current_count;
+	last_counter = current_counter;
 	
 	freq = 1000/Difference;
 	
@@ -56,4 +56,4 @@ void read_freq() {
 			current_freq = freq;
 		}
 	}
-}
+}*/

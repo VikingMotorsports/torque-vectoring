@@ -19,7 +19,7 @@ void SD_GPIO_Init(){
 	HAL_GPIO_Init(SD_SPI_GPIO_PORT, &GPIO_InitStruct);
 }
 
-void SD_SPI_Init(){
+/*void SD_SPI_Init(){
 	GPIO_InitTypeDef GPIO_InitStruct;
 
 	// Configuration of GPIO pins for SPI communication
@@ -46,9 +46,9 @@ void SD_SPI_Init(){
     SD_SPI_HANDLE.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
 	SD_SPI_HANDLE.Init.CRCPolynomial = 10;
 	HAL_SPI_Init(&SD_SPI_HANDLE);
-}
+}*/
 
-void SD_Write(const char * filename, const char * data){
+/*void SD_Write(const char * filename, const char * data){
 	FATFS fs;
 	FIL file;
 	FRESULT res;
@@ -79,7 +79,7 @@ void SD_Write(const char * filename, const char * data){
 
 	// Unmount SD card
 	f_mount(NULL, "", 0);
-}
+}*/
 
 void SD_READ_WRITE(){
 	if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9))
@@ -94,11 +94,11 @@ void SD_READ_WRITE(){
 void test(){
 	HAL_Init();
 	SD_GPIO_Init();
-	SD_SPI_Init();
+	//SD_SD_Init();
 
-	const char * filename = "test.txt";
-	const char * data = "I'm working!";
-	SD_Write(filename, data);
+	//const char * filename = "test.txt";
+	//const char * data = "I'm working!";
+	//SD_Write(filename, data);
 
 	while(1);
 }

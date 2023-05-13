@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "pedcon.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,10 +52,7 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN PV */
-uint32_t time_check = 0;
-uint16_t first_v = 0;
-unit16_t second_v = 0;
-uint16_t user_v = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -83,6 +80,10 @@ static void MX_TIM5_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+pedal_con pedal;
+pedal.first_v = 0;
+pedal.second_v = 0;
+pedal.user_v = 0;
 
   /* USER CODE END 1 */
 
@@ -119,10 +120,10 @@ int main(void)
   {
     // --Insert voltage captures here--
 
-    if (voltage_offset(first_v, second_v) || voltage_check(user_v)) {
-      time_check += 1; 
+    if (voltage_offset(pedal.first_v, pedal.second_v) || voltage_check(pedal.user_v)) {
+      pedal.time_check += 1;
     }
-    if (time_fault_check(time_check)) {
+    if (time_fault_check(pedal.time_check)) {
         // Do torque vectoring
     }
     else {
@@ -467,7 +468,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-int __io_putchar(int ch)
+/*int __io_putchar(int ch)
 {
 	uint8_t c[1];
 	c[0] = ch & 0x00FF;
@@ -484,7 +485,7 @@ int __io_putchar(int ch)
 	   __io_putchar(*ptr++);
 	   }
 	return len;
-}
+}*/
 /* USER CODE END 4 */
 
 /**

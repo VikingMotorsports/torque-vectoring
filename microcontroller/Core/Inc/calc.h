@@ -5,6 +5,8 @@
  *      Author: ProfessorG
  */
 
+#include <stdint.h>
+
 #ifndef INC_CALC_H_
 #define INC_CALC_H_
 

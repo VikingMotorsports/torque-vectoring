@@ -28,9 +28,21 @@
 /* USER CODE BEGIN PTD */
 typedef struct {
   uint16_t buf[ADC_BUF_LEN];
-  size_t top = 0;
-  size_t count = 0;
+  size_t top;
+  size_t count;
 } adc_buffer;
+
+typedef struct {
+  float buf[ADC_BUF_LEN];
+  size_t top;
+  size_t count;
+} throttle_in_buffer;
+
+typedef struct {
+  float buf[ADC_BUF_LEN];
+  size_t top;
+  size_t count;
+} steering_angle_buffer;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -58,7 +70,11 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN PV */
-adc_buffer adc_buf1, adc_buf2, adc_buf3;
+adc_buffer  adc_buf1 = { .top=0, .count=0 },
+            adc_buf2 = { .top=0, .count=0 },
+            adc_buf3 = { .top=0, .count=0 };
+throttle_in_buffer throttle_buf = { .top=0, .count=0 };
+steering_angle_buffer steering_angle_buf = { .top=0, .count=0 };
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,22 +100,68 @@ uint16_t push_adc_buf(adc_buf *buf, uint16_t val)
   buf->top = (1 + buf->top) % ADC_BUF_LEN;
   if (buf->count < ADC_BUF_LEN)
     ++buf->count;
+
+  return val;
+}
+
+float convert_throttle_input(uint16_t raw)
+{
+  float val = (float)raw;
+  val /= 4095.0;
+  val *= 100.0;
+  return val;
+}
+
+float push_throttle_in_buf(throttle_in_buffer *buf, float val)
+{
+  buf->buf[buf->top] = val;
+  buf->top = (1 + buf->top) % ADC_BUF_LEN;
+  if (buf->count < ADC_BUF_LEN)
+    ++buf->count;
+
+  return val;
+}
+
+float convert_steering_angle(uint16_t raw)
+{
+  float val = (float)raw;
+  val /= 4095.0;
+  val -= 0.5;
+  val *= 2.0*230.0*M_PI/180.0;
+  return val;
+}
+
+float push_steering_angle_buf(steering_angle_buffer *buf, float val)
+{
+  buf->buf[buf->top] = val;
+  buf->top = (1 + buf->top) % ADC_BUF_LEN;
+  if (buf->count < ADC_BUF_LEN)
+    ++buf->count;
+
+  return val;
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-  uint16_t val = HAL_ADC_GetValue(hadc);
+  float f;
+  uint16_t val;
+
+  val = HAL_ADC_GetValue(hadc);
   if (hadc == hadc1)
   { // Throttle Input
-    push_adc_buf(adc_buf1, val);
+    push_adc_buf(&adc_buf1, val);
+    f = convert_throttle_input(val);
+    push_throttle_in_buf(&throttle_buf, f);
   }
   else if (hadc == hadc2)
   { // Brake pedal sensor
-    push_adc_buf(adc_buf2, val);
+    push_adc_buf(&adc_buf2, val);
   }
   else if (hadc == hadc3)
   { // Steering angle sensor, extra analog input
-    push_adc_buf(adc_buf3, val);
+    push_adc_buf(&adc_buf3, val);
+    f = convert_steering_angle(val);
+    push_steering_angle_buf(&steering_angle_buf, f);
   }
 }
 /* USER CODE END 0 */

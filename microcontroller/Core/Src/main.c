@@ -26,7 +26,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef struct {
+  uint16_t buf[ADC_BUF_LEN];
+  size_t top = 0;
+  size_t count = 0;
+} adc_buffer;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -54,7 +58,7 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN PV */
-
+adc_buffer adc_buf1, adc_buf2, adc_buf3;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,9 +78,30 @@ static void MX_ADC3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint16_t adc_buf1[ADC_BUF_LEN];
-uint16_t adc_buf2[ADC_BUF_LEN];
-uint16_t adc_buf3[ADC_BUF_LEN];
+uint16_t push_adc_buf(adc_buf *buf, uint16_t val)
+{
+  buf->buf[buf->top] = val;
+  buf->top = (1 + buf->top) % ADC_BUF_LEN;
+  if (buf->count < ADC_BUF_LEN)
+    ++buf->count;
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+  uint16_t val = HAL_ADC_GetValue(hadc);
+  if (hadc == hadc1)
+  { // Throttle Input
+    push_adc_buf(adc_buf1, val);
+  }
+  else if (hadc == hadc2)
+  { // Brake pedal sensor
+    push_adc_buf(adc_buf2, val);
+  }
+  else if (hadc == hadc3)
+  { // Steering angle sensor, extra analog input
+    push_adc_buf(adc_buf3, val);
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -234,7 +259,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf1, ADC_BUF_LEN);
+  HAL_ADC_Start_IT(&hadc1);
   /* USER CODE END ADC1_Init 2 */
 
 }
@@ -286,7 +311,7 @@ static void MX_ADC2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC2_Init 2 */
-  HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc_buf2, ADC_BUF_LEN);
+  HAL_ADC_Start_IT(&hadc2);
   /* USER CODE END ADC2_Init 2 */
 
 }
@@ -338,7 +363,7 @@ static void MX_ADC3_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC3_Init 2 */
-  HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc_buf3, ADC_BUF_LEN);
+  HAL_ADC_Start_IT(&hadc3);
   /* USER CODE END ADC3_Init 2 */
 
 }

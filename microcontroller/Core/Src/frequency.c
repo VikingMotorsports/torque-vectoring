@@ -7,7 +7,7 @@
 #define SENSOR_PIN GPIO_PIN_0
 #define SENSOR_PORT GPIOA
 
-//Threshold values
+//Threshold values for outliers
 #define OUTLIER_COUNT 2
 #define OUTLIER_THRESHOLD 0.1
 

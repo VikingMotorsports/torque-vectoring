@@ -7,11 +7,11 @@
 
 #include "calc.h"
 
-// steering wheel angle [0, 4095] => [-230deg, 230deg]
+// steering wheel angle [0, 4096) => [-230deg, 230deg)
 float convert_steering_wheel_angle(uint16_t raw)
 {
   float val = (float)raw;
-  val /= 4095.0;
+  val /= 4096.0;
   val -= 0.5;
   val *= 2.0*230.0*M_PI/180.0;
   return val;

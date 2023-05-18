@@ -7,24 +7,14 @@
 
 #include "calc.h"
 
-void convert_sensors_ADC_SI(sensors_raw_t data_in, sensors_si_t *data_out)
+// steering wheel angle [0, 4096) => [-230deg, 230deg)
+float convert_steering_wheel_angle(uint16_t raw)
 {
-
-}
-
-void calculate_torque(void)
-{
-
-}
-
-void convert_torque_SI_DAC(torque_si_t data_in, torque_out_t *data_out)
-{
-
-}
-
-void output_torque(void)
-{
-
+  float val = (float)raw;
+  val /= 4096.0;
+  val -= 0.5;
+  val *= 2.0*230.0*M_PI/180.0;
+  return val;
 }
 
 float steering_wheel_angle_to_steering_angle(float steering_wheel_angle)
@@ -33,8 +23,25 @@ float steering_wheel_angle_to_steering_angle(float steering_wheel_angle)
 	return (8.355E-5)*x*x + 0.139*x - 0.03133;
 }
 
-float throttle_percent_to_torque(float throttle_percent)
+float convert_throttle_input(uint16_t raw)
 {
+  float val = (float)raw;
+  val /= 4095.0;
+  val *= 100.0;
+  return val;
+}
 
+throttle_percents convert_power_ratio(float ratio, float throttle_in)
+{
+  float r, ti;
+  r = ratio/100.0;
+  ti = throttle_in/100.0;
+
+  throttle_percents out = (throttle_percents){
+    .left  = ti*r*100.0,
+    .right = ti*(1.0-r)*100.0,
+  };
+
+  return out;
 }
 

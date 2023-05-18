@@ -5,7 +5,7 @@
  *      Author: Isaak
  */
 
-#include "sdlog.h"
+/*#include "sdlog.h"
 
 
 
@@ -79,7 +79,7 @@ void SD_GPIO_Init(){
 
 	// Unmount SD card
 	f_mount(NULL, "", 0);
-}*/
+}
 
 void SD_READ_WRITE(){
 	if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9))
@@ -101,5 +101,5 @@ void test(){
 	//SD_Write(filename, data);
 
 	while(1);
-}
+}*/
 

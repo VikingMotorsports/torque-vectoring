@@ -5,7 +5,7 @@
  *      Author: Isaak
  */
 
-#ifndef SRC_SDLOG_H_
+/*#ifndef SRC_SDLOG_H_
 #define SRC_SDLOG_H_
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_sd.h"

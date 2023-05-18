@@ -5,6 +5,7 @@ adc_buffer  adc_buf1 = { .top=0, .count=0 },
             adc_buf3 = { .top=0, .count=0 };
 throttle_in_buffer throttle_buf = { .top=0, .count=0 };
 steering_angle_buffer steering_angle_buf = { .top=0, .count=0 };
+throttle_percents throttle_out;
 
 uint16_t push_adc_buf(adc_buffer *buf, uint16_t val)
 {

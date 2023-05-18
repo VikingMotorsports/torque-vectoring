@@ -28,6 +28,7 @@ typedef struct {
 extern adc_buffer adc_buf1, adc_buf2, adc_buf3;
 extern throttle_in_buffer throttle_buf;
 extern steering_angle_buffer steering_angle_buf;
+extern throttle_percents throttle_out;
 
 uint16_t push_adc_buf(adc_buffer *buf, uint16_t val);
 float push_throttle_in_buf(throttle_in_buffer *buf, float val);

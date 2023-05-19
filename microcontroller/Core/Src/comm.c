@@ -37,7 +37,7 @@ float push_steering_angle_buf(steering_angle_buffer *buf, float val)
   return val;
 }
 
-throttle_percents write_throttle_out(throttle_percents val)
+throttle_percents write_throttle_out(throttle_percents val, DAC_HandleTypeDef hdac)
 {
   float sum;
   uint16_t left, right;
@@ -55,38 +55,14 @@ throttle_percents write_throttle_out(throttle_percents val)
 
   if (HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, left) != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
 
   if (HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, right) != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
 
   return val;
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
-{
-  float f;
-  uint16_t val;
-
-  val = HAL_ADC_GetValue(hadc);
-  if (hadc == &hadc1)
-  { // Throttle Input
-    push_adc_buf(&adc_buf1, val);
-    f = convert_throttle_input(val);
-    push_throttle_in_buf(&throttle_buf, f);
-  }
-  else if (hadc == &hadc2)
-  { // Brake pedal sensor
-    push_adc_buf(&adc_buf2, val);
-  }
-  else if (hadc == &hadc3)
-  { // Steering angle sensor, extra analog input
-    push_adc_buf(&adc_buf3, val);
-    f = convert_steering_wheel_angle(val);
-    f = steering_wheel_angle_to_steering_angle(f);
-    push_steering_angle_buf(&steering_angle_buf, f);
-  }
-}

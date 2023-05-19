@@ -18,10 +18,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "pedcon.h"
+#include "frequency.h"
+#include "comm.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -79,6 +82,8 @@ static void MX_SPI1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 pedal_con pedal;
+frequency_data tim2;
+//frequency_data tim5;
 /* USER CODE END 0 */
 
 /**
@@ -122,26 +127,41 @@ pedal.user_v = 0;*/
   MX_ADC3_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_3);
+  HAL_ADC_Start_IT(&hadc1);
+  HAL_ADC_Start_IT(&hadc2);
+  HAL_ADC_Start_IT(&hadc3);
+  HAL_DAC_Start(&hdac, 1);
+  HAL_DAC_Start(&hdac, 2);
+  HAL_CAN_Start(&hcan1);
+  htim2.Channel = HAL_TIM_ACTIVE_CHANNEL_1;
+  htim5.Channel = HAL_TIM_ACTIVE_CHANNEL_3;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // --Insert voltage captures here--
 
+    // --Insert voltage captures here--
+	  pedal.first_v = HAL_ADC_GetValue(&hadc1);
+	  pedal.second_v = HAL_ADC_GetValue(&hadc2);
     if (voltage_offset(pedal.first_v, pedal.second_v) || voltage_check(pedal.user_v)) {
       pedal.time_check += 1;
     }
     if (time_fault_check(pedal.time_check)) {
+    	// calculate_torque();
         // Do torque vectoring
     }
     else {
       // Output diagnostic light and output 0 throttle.
     }
   
-
+    // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, *insert first throttle*);
+    // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, *insert second throttle*);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -646,6 +666,73 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+		    {
+		        if (tim2.Is_first_Captured == 0)
+		        {
+		        	tim2.IC_Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+		        	tim2.Is_first_Captured = 1;
+		        }
+		        else if (tim2.Is_first_Captured) {
+		        	tim2.IC_Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+		                if (tim2.IC_Value2 > tim2.IC_Value1)
+		                {
+		                	tim2.Difference = tim2.IC_Value2 - tim2.IC_Value1;
+		                	tim2.Frequency = HAL_RCC_GetPCLK1Freq() / tim2.Difference;
+		                	tim2.CalculationOK = 1;
+							if (tim2.Current_Frequency == 0) {
+								tim2.Current_Frequency = tim2.Frequency;
+							}
+							else {
+								if(check_outliers(tim2.Current_Frequency, tim2.Frequency)) {
+									++tim2.outlier_counter;
+									if (tim2.outlier_counter >= OUTLIER_COUNT) {
+										tim2.outlier_counter = 0;
+										HAL_Delay(1000);
+									}
+								}
+								else {
+									if(tim2.outlier_counter != 0)
+										tim2.outlier_counter = 0;
+									tim2.Current_Frequency = tim2.Frequency;
+								}
+							}
+		                }
+		                else
+		                	tim2.CalculationOK = 0;
+		                tim2.Is_first_Captured = 0;
+		            }
+		    }
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+  float f;
+  uint16_t val;
+
+  val = HAL_ADC_GetValue(hadc);
+  if (hadc == &hadc1)
+  { // Throttle Input
+    push_adc_buf(&adc_buf1, val);
+    f = convert_throttle_input(val);
+    push_throttle_in_buf(&throttle_buf, f);
+  }
+  else if (hadc == &hadc2)
+  { // Brake pedal sensor
+    push_adc_buf(&adc_buf2, val);
+  }
+  else if (hadc == &hadc3)
+  { // Steering angle sensor, extra analog input
+    push_adc_buf(&adc_buf3, val);
+    f = convert_steering_wheel_angle(val);
+    f = steering_wheel_angle_to_steering_angle(f);
+    push_steering_angle_buf(&steering_angle_buf, f);
+  }
+}
+
+
 int __io_putchar(int ch)
 {
 	uint8_t c[1];

@@ -25,6 +25,7 @@
 #include "pedcon.h"
 #include "frequency.h"
 #include "comm.h"
+#include "sdlog.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -76,7 +77,15 @@ static void MX_ADC3_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
+//SD Card Globals
 
+FRESULT file_res;
+char * file_name = NULL;
+short int detect = 0;
+short int detect_last = 0;
+int file_length = 0;
+char buffer[100];
+int file_index = 0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -84,7 +93,6 @@ static void MX_SPI1_Init(void);
 pedal_con pedal;
 frequency_data tim2;
 //frequency_data tim5;
-frequency_data tim5;
 /* USER CODE END 0 */
 
 /**
@@ -140,6 +148,15 @@ pedal.user_v = 0;*/
   HAL_CAN_Start(&hcan1);
   htim2.Channel = HAL_TIM_ACTIVE_CHANNEL_1;
   htim5.Channel = HAL_TIM_ACTIVE_CHANNEL_3;
+
+  if(sd_mount("/") == FR_OK)
+	  //SD card detected
+	  detect = 1;
+  else
+	  //SD card not detected
+	  detect = 0;
+  sd_unmount("/");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -163,6 +180,53 @@ pedal.user_v = 0;*/
   
     // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, *insert first throttle*);
     // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, *insert second throttle*);
+
+    //SD Logging:
+    /*if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6)){
+    	sd_unmount("/");
+    	file_res = sd_mount("/");
+    	if(file_res == FR_OK){
+    		detect = 1;
+    		if(detect_last == 0 && detect == 1 || !file_name){
+    			//Create a new file
+    			//With Headers:
+    			//sprintf(<header1>, "<type>", <header_value>)
+    			//file_length = strlen(header1) + ... + strlen(headerN);
+    			//file_name = (char *) malloc (file_length * sizeof(char))
+    			//snprintf(file_name, file_length, "<type1> - ... - <typeN>", <value1>, ... , <valueN>);
+    			//sd_format();
+    			//file_res = file_create(file_name);
+    			//sd_unmount("/");
+    			//csv_header(file_name, file_length);
+    			//detect_last = detect;
+    		}
+    		//Turn on LED
+    		//HAL_GPIO_WritePin(GPIO pin, function, 1)
+    		csv_update(file_name, file_length);
+    		file_index++;
+    	} else{
+    		if(file_name){
+    			free(file_name);
+    			file_name = NULL;
+    		}
+    		detect = 0;
+    		//Turn LED off when not detected
+    		//HAL_GPIO_WritePin(GPIO pin, function, 0)
+    		detect_last = detect;
+    	}
+    } else {
+    	if(file_name){
+    		free(file_name);
+    	    file_name = NULL;
+    	}
+    	detect = 0;
+    	//Turn LED off when not detected
+    	//HAL_GPIO_WritePin(GPIO pin, function, 0)
+
+    	detect_last = detect;
+
+    }*/
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -667,82 +731,82 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+//Only have access to GPIO pins in main
+void csv_header(char * file_name, int file_length) {
+	char name [file_length];
+	strcpy(name, file_name);
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6)) {
+		file_res = sd_mount("/");
+
+		//Write to CSV using the following format for each column:
+		//sprintf(buffer, "<Column Title>,");
+		//update_file(name, buffer);
+
+		file_res = file_update(name, buffer);
+		sd_unmount("/");
+
+	}
+}
+
+void csv_update(char * file_name, int file_length) {
+
+	char name [file_length];
+	strcpy(name, file_name);
+
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6)) {
+		file_res = sd_mount("/");
+		//Update CSV using following format:
+		//sprintf(buffer, "<%unit>, measurement name"
+		//update_file(name, buffer);
+
+
+
+		sprintf(buffer, "\n\n");
+		file_res = file_update(name, buffer);
+		sd_unmount("/");
+	}
+
+}
+
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
-  {
-    if (tim2.Is_first_Captured == 0)
-    {
-      tim2.IC_Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-      tim2.Is_first_Captured = 1;
-    }
-    else if (tim2.Is_first_Captured) {
-      tim2.IC_Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-      if (tim2.IC_Value2 > tim2.IC_Value1)
-      {
-        tim2.Difference = tim2.IC_Value2 - tim2.IC_Value1;
-        tim2.Frequency = HAL_RCC_GetPCLK1Freq() / tim2.Difference;
-        tim2.CalculationOK = 1;
-        if (tim2.Current_Frequency == 0) {
-          tim2.Current_Frequency = tim2.Frequency;
-        }
-        else {
-          if(check_outliers(tim2.Current_Frequency, tim2.Frequency)) {
-            ++tim2.outlier_counter;
-            if (tim2.outlier_counter >= OUTLIER_COUNT) {
-              tim2.outlier_counter = 0;
-              HAL_Delay(1000);
-            }
-          }
-          else {
-            if(tim2.outlier_counter != 0)
-              tim2.outlier_counter = 0;
-            tim2.Current_Frequency = tim2.Frequency;
-          }
-        }
-      }
-      else
-        tim2.CalculationOK = 0;
-      tim2.Is_first_Captured = 0;
-    }
-  }
-  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
-  {
-    if (tim5.Is_first_Captured == 0)
-    {
-      tim5.IC_Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
-      tim5.Is_first_Captured = 1;
-    }
-    else if (tim5.Is_first_Captured) {
-      tim5.IC_Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
-      if (tim5.IC_Value2 > tim5.IC_Value1)
-      {
-        tim5.Difference = tim5.IC_Value2 - tim5.IC_Value1;
-        tim5.Frequency = HAL_RCC_GetPCLK1Freq() / tim5.Difference;
-        tim5.CalculationOK = 1;
-        if (tim5.Current_Frequency == 0) {
-          tim5.Current_Frequency = tim5.Frequency;
-        }
-        else {
-          if(check_outliers(tim5.Current_Frequency, tim5.Frequency)) {
-            ++tim5.outlier_counter;
-            if (tim5.outlier_counter >= OUTLIER_COUNT) {
-              tim5.outlier_counter = 0;
-              HAL_Delay(1000);
-            }
-          }
-          else {
-            if(tim5.outlier_counter != 0)
-              tim5.outlier_counter = 0;
-            tim5.Current_Frequency = tim5.Frequency;
-          }
-        }
-      }
-      else
-        tim5.CalculationOK = 0;
-      tim5.Is_first_Captured = 0;
-    }
-  }
+		    {
+		        if (tim2.Is_first_Captured == 0)
+		        {
+		        	tim2.IC_Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+		        	tim2.Is_first_Captured = 1;
+		        }
+		        else if (tim2.Is_first_Captured) {
+		        	tim2.IC_Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+		                if (tim2.IC_Value2 > tim2.IC_Value1)
+		                {
+		                	tim2.Difference = tim2.IC_Value2 - tim2.IC_Value1;
+		                	tim2.Frequency = HAL_RCC_GetPCLK1Freq() / tim2.Difference;
+		                	tim2.CalculationOK = 1;
+							if (tim2.Current_Frequency == 0) {
+								tim2.Current_Frequency = tim2.Frequency;
+							}
+							else {
+								if(check_outliers(tim2.Current_Frequency, tim2.Frequency)) {
+									++tim2.outlier_counter;
+									if (tim2.outlier_counter >= OUTLIER_COUNT) {
+										tim2.outlier_counter = 0;
+										HAL_Delay(1000);
+									}
+								}
+								else {
+									if(tim2.outlier_counter != 0)
+										tim2.outlier_counter = 0;
+									tim2.Current_Frequency = tim2.Frequency;
+								}
+							}
+		                }
+		                else
+		                	tim2.CalculationOK = 0;
+		                tim2.Is_first_Captured = 0;
+		            }
+		    }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)

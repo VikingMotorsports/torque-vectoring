@@ -254,6 +254,15 @@ def magic_formula(w, p, b=10, c=1.9, d=1, e=.97):
     F = w * d * math.sin(c * math.atan(b * p * (1 - e) + e * b * p - math.atan(b * p)))
     return F
 
+def steering_wheel_angle_to_steering_angle(steering_wheel_angle):
+    """
+    """
+    x = (8.355 * pow(10, -5)) * steering_wheel_angle * steering_wheel_angle + 0.139 * steering_wheel_angle - 0.03133
+    myvar = steering_wheel_angle
+    y = myvar * (math.pi/180)
+    return y
+
+
 def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
     """
         Simulates the vehicle dynamics given the initial conditions and returns the
@@ -303,8 +312,8 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
 
 if __name__ == '__main__':
     
-    # Simulate vehicle dynamics with given velocities, torque applied to each wheel, and steering wheel angle
-    ax, ay, wheel_velocity, yaw_rate, des_rate = simulate(1, 1, 4.75, 5, 0.4)
+    # Simulate vehicle dynamics with given velocities, torque applied to each wheel, and steering wheel angle (in degrees)
+    ax, ay, wheel_velocity, yaw_rate, des_rate = simulate(1, 1, 5, 5, steering_wheel_angle_to_steering_angle(20))
 
     # desired_yaw_rate = calculate_desired_yaw_rate(random_velocity, random_steering_angle)
 

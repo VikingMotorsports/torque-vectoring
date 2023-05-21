@@ -256,10 +256,10 @@ def magic_formula(w, p, b=10, c=1.9, d=1, e=.97):
 
 def steering_wheel_angle_to_steering_angle(steering_wheel_angle):
     """
+    Converts steering wheel angle to actual steering angle
     """
     x = (8.355 * pow(10, -5)) * steering_wheel_angle * steering_wheel_angle + 0.139 * steering_wheel_angle - 0.03133
-    myvar = steering_wheel_angle
-    y = myvar * (math.pi/180)
+    y = x * (math.pi/180)
     return y
 
 

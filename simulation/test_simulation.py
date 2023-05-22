@@ -51,3 +51,9 @@ def test_magic_formula():
     p = ((rl_slippage + rr_slippage) / 2) - 1
     F = w * d * math.sin(c * math.atan(b * p * (1 - e) + e * b * p - math.atan(b * p)))
     assert magic_formula(w, (rl_slippage + rr_slippage) / 2) == F
+
+def test_steering_wheel_angle_to_steering_angle():
+    steering_wheel_angle = 20
+    x = (8.355 * pow(10, -5)) * steering_wheel_angle * steering_wheel_angle + 0.139 * steering_wheel_angle - 0.03133
+    y = x * (math.pi/180)
+    assert steering_wheel_angle_to_steering_angle(steering_wheel_angle) == y

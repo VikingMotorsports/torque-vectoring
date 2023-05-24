@@ -3,7 +3,6 @@ Pedal Controller code
 */
 
 #include "pedcon.h"
-#include <stdio.h>
 /*
 Calculates the voltage offset between both voltage inputs.
 

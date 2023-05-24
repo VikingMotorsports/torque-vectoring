@@ -66,3 +66,41 @@ throttle_percents write_throttle_out(throttle_percents val, DAC_HandleTypeDef hd
   return val;
 }
 
+float get_throttle_in_smooth(void)
+{
+  int num_samples, i, first;
+  num_samples = SMOOTH_NUM_SAMPLES;
+
+  if (num_samples > throttle_buf.count)
+    num_samples = throttle_buf.count;
+  
+  first = throttle_buf.top + ADC_BUF_LEN - num_samples;
+
+  float sum = 0.0f;
+  for (i = 0; i < num_samples; ++i)
+  {
+    sum += throttle_buf[(first + i)%ADC_BUF_LEN];
+  }
+
+  return sum/num_samples;
+}
+
+float get_steering_angle_smooth(void)
+{
+  int num_samples, i, first;
+  num_samples = SMOOTH_NUM_SAMPLES;
+
+  if (num_samples > steering_angle_buf.count)
+    num_samples = steering_angle_buf.count;
+  
+  first = steering_angle_buf.top + ADC_BUF_LEN - num_samples;
+
+  float sum = 0.0f;
+  for (i = 0; i < num_samples; ++i)
+  {
+    sum += steering_angle_buf[(first + i)%ADC_BUF_LEN];
+  }
+
+  return sum/num_samples;
+}
+

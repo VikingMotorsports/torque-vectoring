@@ -6,6 +6,7 @@
 #include "calc.h"
 
 #define ADC_BUF_LEN 4096
+#define SMOOTH_NUM_SAMPLES 3
 
 typedef struct {
   uint16_t buf[ADC_BUF_LEN];
@@ -34,5 +35,8 @@ uint16_t push_adc_buf(adc_buffer *buf, uint16_t val);
 float push_throttle_in_buf(throttle_in_buffer *buf, float val);
 float push_steering_angle_buf(steering_angle_buffer *buf, float val);
 throttle_percents write_throttle_out(throttle_percents val, DAC_HandleTypeDef hdac);
+
+float get_throttle_in_smooth(void);
+float get_steering_angle_smooth(void);
 
 #endif

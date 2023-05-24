@@ -5,7 +5,7 @@
 #include "stm32f4xx_hal.h"
 #include "calc.h"
 
-#define ADC_BUF_LEN 4096
+#define ADC_BUF_LEN 3
 #define SMOOTH_NUM_SAMPLES 3
 
 typedef struct {

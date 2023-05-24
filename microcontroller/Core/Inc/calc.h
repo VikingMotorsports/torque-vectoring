@@ -21,6 +21,7 @@ typedef struct {
 float convert_throttle_input(uint16_t raw);
 float convert_steering_wheel_angle(uint16_t raw);
 float steering_wheel_angle_to_steering_angle(float steering_wheel_angle);
+float convert_rpm(int raw);
 throttle_percents convert_power_ratio(float ratio, float throttle_in);
 
 #endif /* INC_CALC_H_ */

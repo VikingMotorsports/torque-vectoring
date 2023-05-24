@@ -3,7 +3,6 @@ Pedal Controller code
 */
 
 #include "pedcon.h"
-
 /*
 Calculates the voltage offset between both voltage inputs.
 
@@ -34,14 +33,14 @@ int voltage_offset(uint16_t first_v, uint16_t second_v) {
     }
     float diff = 0;
     if (first_v > second_v) {
-        diff = (second_v / first_v) * 10;
+        diff = ((float) second_v / (float) first_v) * 100.0;
     }
     else if (first_v < second_v) {
-        diff = (first_v / second_v) * 10;
+        diff = ((float) first_v / (float) second_v) * 100.0;
     }
-    if (diff > 10) 
+    if (diff < 90.0)
         return 0;
-    
+
     return 1;
 }
 
@@ -67,7 +66,7 @@ Returns: If time_check surpasses a specified value representing time, then retur
 Else return 1.
 */
 int time_fault_check(uint32_t value) {
-    if (value > 44444) 
+    if (value > 44444)
         return 0;
     return 1;
 }

@@ -31,6 +31,13 @@ float convert_throttle_input(uint16_t raw)
   return val;
 }
 
+float convert_rpm(int raw) {
+	float val = (float)raw;
+	val /= 4.0;
+	val = 18 * M_PI * 60 / 63360;
+	return val;
+}
+
 throttle_percents convert_power_ratio(float ratio, float throttle_in)
 {
   float r, ti;

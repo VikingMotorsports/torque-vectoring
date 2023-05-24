@@ -771,42 +771,79 @@ void csv_update(char * file_name, int file_length) {
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
-		    {
-		        if (tim2.Is_first_Captured == 0)
-		        {
-		        	tim2.IC_Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-		        	tim2.Is_first_Captured = 1;
-		        }
-		        else if (tim2.Is_first_Captured) {
-		        	tim2.IC_Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-		                if (tim2.IC_Value2 > tim2.IC_Value1)
-		                {
-		                	tim2.Difference = tim2.IC_Value2 - tim2.IC_Value1;
-		                	tim2.Frequency = HAL_RCC_GetPCLK1Freq() / tim2.Difference;
-		                	tim2.CalculationOK = 1;
-							if (tim2.Current_Frequency == 0) {
-								tim2.Current_Frequency = tim2.Frequency;
-							}
-							else {
-								if(check_outliers(tim2.Current_Frequency, tim2.Frequency)) {
-									++tim2.outlier_counter;
-									if (tim2.outlier_counter >= OUTLIER_COUNT) {
-										tim2.outlier_counter = 0;
-										HAL_Delay(1000);
-									}
-								}
-								else {
-									if(tim2.outlier_counter != 0)
-										tim2.outlier_counter = 0;
-									tim2.Current_Frequency = tim2.Frequency;
-								}
-							}
-		                }
-		                else
-		                	tim2.CalculationOK = 0;
-		                tim2.Is_first_Captured = 0;
-		            }
-		    }
+  {
+    if (tim2.Is_first_Captured == 0)
+    {
+      tim2.IC_Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+      tim2.Is_first_Captured = 1;
+    }
+    else if (tim2.Is_first_Captured) {
+      tim2.IC_Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+      if (tim2.IC_Value2 > tim2.IC_Value1)
+      {
+        tim2.Difference = tim2.IC_Value2 - tim2.IC_Value1;
+        tim2.Frequency = HAL_RCC_GetPCLK1Freq() / tim2.Difference;
+        tim2.CalculationOK = 1;
+        if (tim2.Current_Frequency == 0) {
+          tim2.Current_Frequency = tim2.Frequency;
+        }
+        else {
+          if(check_outliers(tim2.Current_Frequency, tim2.Frequency)) {
+            ++tim2.outlier_counter;
+            if (tim2.outlier_counter >= OUTLIER_COUNT) {
+              tim2.outlier_counter = 0;
+              HAL_Delay(1000);
+            }
+          }
+          else {
+            if(tim2.outlier_counter != 0)
+              tim2.outlier_counter = 0;
+            tim2.Current_Frequency = tim2.Frequency;
+          }
+        }
+      }
+      else
+        tim2.CalculationOK = 0;
+      tim2.Is_first_Captured = 0;
+    }
+  }
+  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
+  {
+    if (tim5.Is_first_Captured == 0)
+    {
+      tim5.IC_Value1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
+      tim5.Is_first_Captured = 1;
+    }
+    else if (tim5.Is_first_Captured) {
+      tim5.IC_Value2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
+      if (tim5.IC_Value2 > tim5.IC_Value1)
+      {
+        tim5.Difference = tim5.IC_Value2 - tim5.IC_Value1;
+        tim5.Frequency = HAL_RCC_GetPCLK1Freq() / tim5.Difference;
+        tim5.CalculationOK = 1;
+        if (tim5.Current_Frequency == 0) {
+          tim5.Current_Frequency = tim5.Frequency;
+        }
+        else {
+          if(check_outliers(tim5.Current_Frequency, tim5.Frequency)) {
+            ++tim5.outlier_counter;
+            if (tim5.outlier_counter >= OUTLIER_COUNT) {
+              tim5.outlier_counter = 0;
+              HAL_Delay(1000);
+            }
+          }
+          else {
+            if(tim5.outlier_counter != 0)
+              tim5.outlier_counter = 0;
+            tim5.Current_Frequency = tim5.Frequency;
+          }
+        }
+      }
+      else
+        tim5.CalculationOK = 0;
+      tim5.Is_first_Captured = 0;
+    }
+  }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)

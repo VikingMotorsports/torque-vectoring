@@ -26,6 +26,7 @@
 #include "frequency.h"
 #include "comm.h"
 #include "sdlog.h"
+#include "calc.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -92,7 +93,8 @@ int file_index = 0;
 /* USER CODE BEGIN 0 */
 pedal_con pedal;
 frequency_data tim2;
-//frequency_data tim5;
+frequency_data tim5;
+throttle_percents throttle;
 /* USER CODE END 0 */
 
 /**
@@ -164,22 +166,35 @@ pedal.user_v = 0;*/
   while (1)
   {
 
-    // --Insert voltage captures here--
-	  pedal.first_v = HAL_ADC_GetValue(&hadc1);
-	  pedal.second_v = HAL_ADC_GetValue(&hadc2);
-    if (voltage_offset(pedal.first_v, pedal.second_v) || voltage_check(pedal.user_v)) {
-      pedal.time_check += 1;
-    }
-    if (time_fault_check(pedal.time_check)) {
-    	// calculate_torque();
-        // Do torque vectoring
-    }
-    else {
-      // Output diagnostic light and output 0 throttle.
-    }
-  
-    // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, *insert first throttle*);
-    // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, *insert second throttle*);
+	  if (!voltage_offset(pedal.first_v, pedal.second_v) || !voltage_check(pedal.user_v)) {
+	      	pedal.time_check += 1;
+	      }
+	      else {
+	      	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
+	      		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); //Turn off APPS if already active
+	      	}
+	      	pedal.time_check = 0;
+	      }
+
+	      if (time_fault_check(pedal.time_check)) {
+	      	// convert_rpm(raw value goes here)
+
+	      	// throttle = lookup_table(convert_throttle_input(adc_throttle_buf), steering_wheel_angle_to_steering_angle(adc_steering_buf));
+	      	write_throttle_out(throttle, hdac);
+	          // Do torque vectoring
+	      }
+	      else {
+	      	throttle.left = 0;
+	      	throttle.right = 0;
+	      	write_throttle_out(throttle, hdac);
+	      	if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
+	      		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
+	      	}
+	      	pedal.time_check = 44444;
+	        // Output diagnostic light and output APPS SIGNAL.
+	      }
+
+	      // Write out to SD card
 
     //SD Logging:
     /*if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6)){
@@ -876,7 +891,7 @@ int __io_putchar(int ch)
 {
 	uint8_t c[1];
 	c[0] = ch & 0x00FF;
-	HAL_UART_Transmit_IT(&huart2, &*c, 1);
+	HAL_UART_Transmit_IT(&huart2, &*c, sizeof(c));
 	return ch;
 	}
 

@@ -38,4 +38,14 @@ def generate():
 
   return lut
 
+def toCLUT(lut):
+  s = '{\n'
+  for i in lut:
+    s += '\t{ '
+    for j in i:
+      s += '{ %f, %f, }, ' % (j[0], j[1])
+    s += '}, \n'
+  s += '};'
+  return s
+
 #lut = generate()

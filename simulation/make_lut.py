@@ -1,7 +1,4 @@
-import sys
 import numpy as np
-
-sys.path.insert(1, 'simulation')
 from simulation import *
 
 # Run simulation with ratios from 0 to 100%

@@ -25,6 +25,8 @@
 #include "pedcon.h"
 #include "frequency.h"
 #include "comm.h"
+#include "sdlog.h"
+#include "calc.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -76,15 +78,23 @@ static void MX_ADC3_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
+//SD Card Globals
 
+FRESULT file_res;
+char * file_name = NULL;
+short int detect = 0;
+short int detect_last = 0;
+int file_length = 0;
+char buffer[100];
+int file_index = 0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 pedal_con pedal;
 frequency_data tim2;
-//frequency_data tim5;
 frequency_data tim5;
+throttle_percents throttle;
 /* USER CODE END 0 */
 
 /**
@@ -140,6 +150,15 @@ pedal.user_v = 0;*/
   HAL_CAN_Start(&hcan1);
   htim2.Channel = HAL_TIM_ACTIVE_CHANNEL_1;
   htim5.Channel = HAL_TIM_ACTIVE_CHANNEL_3;
+
+  if(sd_mount("/") == FR_OK)
+	  //SD card detected
+	  detect = 1;
+  else
+	  //SD card not detected
+	  detect = 0;
+  sd_unmount("/");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -147,22 +166,82 @@ pedal.user_v = 0;*/
   while (1)
   {
 
-    // --Insert voltage captures here--
-	  pedal.first_v = HAL_ADC_GetValue(&hadc1);
-	  pedal.second_v = HAL_ADC_GetValue(&hadc2);
-    if (voltage_offset(pedal.first_v, pedal.second_v) || voltage_check(pedal.user_v)) {
-      pedal.time_check += 1;
-    }
-    if (time_fault_check(pedal.time_check)) {
-    	// calculate_torque();
-        // Do torque vectoring
-    }
-    else {
-      // Output diagnostic light and output 0 throttle.
-    }
-  
-    // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, *insert first throttle*);
-    // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, *insert second throttle*);
+	  if (!voltage_offset(pedal.first_v, pedal.second_v) || !voltage_check(pedal.user_v)) {
+	      	pedal.time_check += 1;
+	      }
+	      else {
+	      	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
+	      		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); //Turn off APPS if already active
+	      	}
+	      	pedal.time_check = 0;
+	      }
+
+	      if (time_fault_check(pedal.time_check)) {
+	      	// convert_rpm(raw value goes here)
+
+	      	// throttle = lookup_table(convert_throttle_input(adc_throttle_buf), steering_wheel_angle_to_steering_angle(adc_steering_buf));
+	      	write_throttle_out(throttle, hdac);
+	          // Do torque vectoring
+	      }
+	      else {
+	      	throttle.left = 0;
+	      	throttle.right = 0;
+	      	write_throttle_out(throttle, hdac);
+	      	if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
+	      		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
+	      	}
+	      	pedal.time_check = 44444;
+	        // Output diagnostic light and output APPS SIGNAL.
+	      }
+
+	      // Write out to SD card
+
+    //SD Logging:
+    /*if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6)){
+    	sd_unmount("/");
+    	file_res = sd_mount("/");
+    	if(file_res == FR_OK){
+    		detect = 1;
+    		if(detect_last == 0 && detect == 1 || !file_name){
+    			//Create a new file
+    			//With Headers:
+    			//sprintf(<header1>, "<type>", <header_value>)
+    			//file_length = strlen(header1) + ... + strlen(headerN);
+    			//file_name = (char *) malloc (file_length * sizeof(char))
+    			//snprintf(file_name, file_length, "<type1> - ... - <typeN>", <value1>, ... , <valueN>);
+    			//sd_format();
+    			//file_res = file_create(file_name);
+    			//sd_unmount("/");
+    			//csv_header(file_name, file_length);
+    			//detect_last = detect;
+    		}
+    		//Turn on LED
+    		//HAL_GPIO_WritePin(GPIO pin, function, 1)
+    		csv_update(file_name, file_length);
+    		file_index++;
+    	} else{
+    		if(file_name){
+    			free(file_name);
+    			file_name = NULL;
+    		}
+    		detect = 0;
+    		//Turn LED off when not detected
+    		//HAL_GPIO_WritePin(GPIO pin, function, 0)
+    		detect_last = detect;
+    	}
+    } else {
+    	if(file_name){
+    		free(file_name);
+    	    file_name = NULL;
+    	}
+    	detect = 0;
+    	//Turn LED off when not detected
+    	//HAL_GPIO_WritePin(GPIO pin, function, 0)
+
+    	detect_last = detect;
+
+    }*/
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -667,6 +746,43 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+//Only have access to GPIO pins in main
+void csv_header(char * file_name, int file_length) {
+	char name [file_length];
+	strcpy(name, file_name);
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6)) {
+		file_res = sd_mount("/");
+
+		//Write to CSV using the following format for each column:
+		//sprintf(buffer, "<Column Title>,");
+		//update_file(name, buffer);
+
+		file_res = file_update(name, buffer);
+		sd_unmount("/");
+
+	}
+}
+
+void csv_update(char * file_name, int file_length) {
+
+	char name [file_length];
+	strcpy(name, file_name);
+
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6)) {
+		file_res = sd_mount("/");
+		//Update CSV using following format:
+		//sprintf(buffer, "<%unit>, measurement name"
+		//update_file(name, buffer);
+
+
+
+		sprintf(buffer, "\n\n");
+		file_res = file_update(name, buffer);
+		sd_unmount("/");
+	}
+
+}
+
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
@@ -775,7 +891,7 @@ int __io_putchar(int ch)
 {
 	uint8_t c[1];
 	c[0] = ch & 0x00FF;
-	HAL_UART_Transmit_IT(&huart2, &*c, 1);
+	HAL_UART_Transmit_IT(&huart2, &*c, sizeof(c));
 	return ch;
 	}
 

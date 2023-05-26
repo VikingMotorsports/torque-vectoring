@@ -23,15 +23,13 @@ def test_calculate_steer_gradient():
 
 def test_calculate_desired_yaw_rate():
     delta = random.uniform(-230, 230)
-    desired_yaw_rate = (v_cg / ((lf + lr) + (0.0012965 * math.pow(v_cg, 2)))) * delta
+    desired_yaw_rate = (v_cg / (lf + lr) - 0.00168 * math.pow(v_cg, 2)) * delta
     assert calculate_desired_yaw_rate(v_cg, delta) == desired_yaw_rate
 
 def test_calculate_yaw_rate():
-    Ku = 0
-    for t in range(1, 100000):
-        delta_torque = calculate_delta_torque(Trr, Trl)
-        Ku += ((((-lf * Cy_f + lr * Cy_r) / (Izz * Vx)) - ((lf**2 * Cy_f + lr**2 * Cy_r) / (Izz * Vx))) * Ku + ((lf * Cy_f) / Izz) * St_a + (1 / 0.05 * Izz) * delta_torque) / t
-        assert calculate_yaw_rate(t, Ku, Vx, St_a, Trr, Trl) == Ku
+    delta_torque = calculate_delta_torque(Trr, Trl)
+    Ku = ((-lf * Cy_f + lr * Cy_r) / (Izz * Vx)) - ((lf**2 * Cy_f + lr**2 * Cy_r) / (Izz * Vx)) + ((lf * Cy_f) / Izz) * St_a + (1 / 0.05 * Izz) * delta_torque
+    assert calculate_yaw_rate(Cy_f, Cy_r, Vx, St_a, Trr, Trl) == Ku
 
 def test_calculate_yaw_moment():
     M_V = (Trr - Trl) * Tr

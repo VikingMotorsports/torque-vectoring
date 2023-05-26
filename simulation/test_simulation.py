@@ -27,6 +27,7 @@ def test_calculate_desired_yaw_rate():
     assert calculate_desired_yaw_rate(v_cg, delta) == desired_yaw_rate
 
 def test_calculate_yaw_rate():
+    Ku = 0
     for t in range(100000):
         delta_torque = calculate_delta_torque(Trr, Trl)
         Ku += ((((-lf * Cy_f + lr * Cy_r) / (Izz * Vx)) - ((lf**2 * Cy_f + lr**2 * Cy_r) / (Izz * Vx))) * Ku + ((lf * Cy_f) / Izz) * St_a + (1 / 0.05 * Izz) * delta_torque) / t

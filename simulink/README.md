@@ -1,7 +1,7 @@
 #Simulink Documentation
 Followed the Simulink Model in the Dissertacao PDF file.
 
-Created blocks for each step in the calculation:
+##Created blocks for each step in the calculation:
 -Steering Kinematics
 -Wheel Dynamics
 -Slip Ratios

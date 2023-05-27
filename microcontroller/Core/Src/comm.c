@@ -79,7 +79,7 @@ float get_throttle_in_smooth(void)
   float sum = 0.0f;
   for (i = 0; i < num_samples; ++i)
   {
-    sum += throttle_buf[(first + i)%ADC_BUF_LEN];
+    sum += throttle_buf.buf[(first + i)%ADC_BUF_LEN];
   }
 
   return sum/num_samples;
@@ -98,7 +98,7 @@ float get_steering_angle_smooth(void)
   float sum = 0.0f;
   for (i = 0; i < num_samples; ++i)
   {
-    sum += steering_angle_buf[(first + i)%ADC_BUF_LEN];
+    sum += steering_angle_buf.buf[(first + i)%ADC_BUF_LEN];
   }
 
   return sum/num_samples;

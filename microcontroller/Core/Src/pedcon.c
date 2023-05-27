@@ -66,7 +66,7 @@ Returns: If time_check surpasses a specified value representing time, then retur
 Else return 1.
 */
 int time_fault_check(uint32_t value) {
-    if (value > 44444)
+    if (value == 44444)
         return 0;
     return 1;
 }

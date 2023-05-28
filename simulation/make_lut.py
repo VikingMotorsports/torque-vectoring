@@ -4,8 +4,8 @@ from simulation import *
 # Run simulation with ratios from 0 to 100%
 # Take run with best desired yaw minus actual yaw
 
-min_angle = -0.587965415313701
-max_angle =  0.527998108411473
+min_angle = -0.6356685485304198
+max_angle =  0.6345749252211202
 total_throttle = 10
 steering_angle_resolution = 13
 throttle_percent_resolution = 13
@@ -67,4 +67,4 @@ def generate_to_file(filename):
   with open(filename, 'a') as lut_file:
     lut_file.write(clut)
 
-#lut = generate()
+lut = generate_to_file("myfile")

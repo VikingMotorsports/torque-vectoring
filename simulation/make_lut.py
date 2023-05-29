@@ -1,4 +1,5 @@
 import numpy as np
+import multiprocessing
 from simulation import *
 
 # Run simulation with ratios from 0 to 100%
@@ -6,47 +7,60 @@ from simulation import *
 
 min_angle = -0.6356685485304198
 max_angle =  0.6345749252211202
-total_throttle = 10
-steering_angle_resolution = 13
-throttle_percent_resolution = 13
+min_velocity = 0.5
+max_velocity = 40 # m/s
+max_torque = 80 # Nm
+steering_angle_resolution = 17
+velocity_resolution = 17
 n_samples = 100
 skip = 200
 
+def makeEntry(angle, velocity):
+  min_diff = None
+  l, r = None, None
+  for ratio in np.linspace(0, 100, n_samples):
+    rp = ratio/100
+    lin, rin = max_torque*rp, max_torque*(1-rp)
+    ax, ay, wheel_velocity, yaw_rate, des_rate = simulate(velocity, velocity, lin, rin, angle)
+
+    # Take best after index 200
+    for k in range(skip, len(yaw_rate)):
+      diff = abs(des_rate[k] - yaw_rate[k])
+
+      if (min_diff is None) or (diff < min_diff):
+        min_diff = diff
+        l, r = lin, rin
+    # Take index 200
+    #k = skip
+    #diff = abs(des_rate[k] - yaw_rate[k])
+    #
+    #if (min_diff is None) or (diff < min_diff):
+    #  min_diff = diff
+    #  l, r = lin, rin
+
+  #lut[-1].append((l, r))
+  #print('.', end='', flush=True)
+
+  return l, r
+
+def unwrapArgs(args):
+  print(args)
+  return args[0], makeEntry(*args[1])
+
+def simulationInputIterator():
+  for i, angle in zip(range(steering_angle_resolution), np.linspace(min_angle, max_angle, steering_angle_resolution)):
+    for j, velocity in zip(range(velocity_resolution), np.linspace(min_velocity, max_velocity, velocity_resolution)):
+      yield (i, j), (angle, velocity)
+
 def generate():
-  lut = []
-  i = 0
+  # Prepare empty lut
+  lut = [[None for j in range(velocity_resolution)] for i in range(steering_angle_resolution)]
 
-  angle_step = (max_angle - min_angle) / steering_angle_resolution
-  for angle in np.linspace(min_angle, max_angle, steering_angle_resolution):
-    print('%3d' % i, end=' ', flush=True)
-    lut.append([])
-    for throttle in np.linspace(0, 100, throttle_percent_resolution):
-      min_diff = None
-      l, r = None, None
-      for ratio in np.linspace(0, 100, n_samples):
-        tp, rp = throttle/100, ratio/100
-        lin, rin = total_throttle*tp*rp, total_throttle*tp*(1-rp)
-        ax, ay, wheel_velocity, yaw_rate, des_rate = simulate(1, 1, tp, rp, angle)
-
-        # Take best after index 200
-        for j in range(skip, len(yaw_rate)):
-          diff = abs(des_rate[j] - yaw_rate[j])
-
-          if (min_diff is None) or (diff < min_diff):
-            min_diff = diff
-            l, r = lin, rin
-        # Take index 200
-        #j = skip
-        #diff = abs(des_rate[j] - yaw_rate[j])
-
-        if (min_diff is None) or (diff < min_diff):
-          min_diff = diff
-          l, r = lin, rin
-
-      lut[-1].append((l, r))
-      print('.', end=' ', flush=True)
-    i += 1
+  with multiprocessing.Pool(16) as p:
+    results = p.map(unwrapArgs, simulationInputIterator())
     print()
+    for (i, j), (l, r) in results:
+      lut[i][j] = (l, r)
 
   return lut
 
@@ -64,7 +78,7 @@ def generate_to_file(filename):
   lut = generate()
   clut = toCLUT(lut)
   print(clut)
-  with open(filename, 'a') as lut_file:
+  with open(filename, 'w') as lut_file:
     lut_file.write(clut)
 
 lut = generate_to_file("myfile")

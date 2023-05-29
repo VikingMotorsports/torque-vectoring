@@ -257,7 +257,10 @@ def steering_wheel_angle_to_steering_angle(steering_wheel_angle):
     """
     Converts steering wheel angle to actual steering angle
     """
-    x = (8.355 * pow(10, -5)) * steering_wheel_angle * steering_wheel_angle + 0.139 * steering_wheel_angle - 0.03133
+    if steering_wheel_angle >= 0:
+        x = (8.355 * (10**-5)) * (steering_wheel_angle ** 2) + (0.139 * steering_wheel_angle) - 0.03133
+    else:
+        x = (8.355 * (10**-5)) * (-steering_wheel_angle ** 2) + (0.139 * steering_wheel_angle) - 0.03133
     y = x * (math.pi/180)
     return y
 
@@ -289,7 +292,7 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
     curr_yaw_rate = arr.array('f', [0])
     des_yaw_rate = arr.array('f', [calculate_desired_yaw_rate(v_cg, steering_a)])
 
-    for i in range(100000):
+    for i in range(10000):
         rl_wheelAngularAccel = radians_to_ms((2*rl_torqueWheel) / (9 * wheelRadius))
         rr_wheelAngularAccel = radians_to_ms((2*rr_torqueWheel) / (9 * wheelRadius))
         rl_slippage = (v_cg + rl_wheelAngularAccel) / v_cg
@@ -297,7 +300,7 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
         rl_slippage = max(rl_slippage, 1.0)
         rr_slippage = max(rr_slippage, 1.0)
         F = magic_formula(weight / 2, (rl_slippage + rr_slippage) / 2)
-        LongAccel = (F / m) / 1000
+        LongAccel = (F / m) / 100
         v_cg = v_cg + LongAccel
         rl_wheelAngularVelocity = rl_slippage * v_cg
         rr_wheelAngularVelocity = rr_slippage * v_cg
@@ -312,7 +315,7 @@ def simulate(v_cg, w_Velocity, rl_torqueWheel, rr_torqueWheel, steering_a):
 if __name__ == '__main__':
     
     # Simulate vehicle dynamics with given velocities, torque applied to each wheel, and steering wheel angle (in degrees)
-    ax, ay, wheel_velocity, yaw_rate, des_rate = simulate(1, 1, 40, 40, steering_wheel_angle_to_steering_angle(30))
+    ax, ay, wheel_velocity, yaw_rate, des_rate = simulate(1, 1, 1, 1, steering_wheel_angle_to_steering_angle(-20))
 
     # desired_yaw_rate = calculate_desired_yaw_rate(random_velocity, random_steering_angle)
 
@@ -321,7 +324,7 @@ if __name__ == '__main__':
     time = arr.array('f', [0])
     total_slip = arr.array('f', [((wheel_velocity[i] / ax[i]) - 1) * 100])
     while i < len(ax):
-        time.append(i / 1000)
+        time.append(i / 100)
         total_slip.append(((wheel_velocity[i] / ax[i]) - 1) * 100)
         i += 1
     

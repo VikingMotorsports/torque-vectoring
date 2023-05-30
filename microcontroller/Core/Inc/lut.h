@@ -25,8 +25,8 @@ typedef struct {
   LUT_index_float ref;
 } LUT_index_quad;
 
-#define STEERING_ANGLE_RESOLUTION 13
-#define VELOCITY_RESOLUTION 13
+#define STEERING_ANGLE_RESOLUTION 17
+#define VELOCITY_RESOLUTION 17
 
 extern throttle_percents LUT[STEERING_ANGLE_RESOLUTION][VELOCITY_RESOLUTION];
 

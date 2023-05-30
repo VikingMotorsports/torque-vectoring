@@ -15,8 +15,8 @@ typedef struct {
 	uint32_t CalculationOK;
 	uint32_t Is_First_Captured;
 	uint32_t outlier_counter;
-	unsigned long Current_Frequency;
-	unsigned long Good_Frequency;
+	uint32_t Current_Frequency;
+	uint32_t Good_Frequency;
 } frequency_data;
 
 void freq_init(frequency_data * freq);

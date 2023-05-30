@@ -146,11 +146,13 @@ def calculate_yaw_rate(t, Ku, Vx, St_a, Trr, Trl):
         cornering stiffness of the front and rear tires, current velocity, steering angle,
         and torque applied to the rear wheels. The yaw rate is a measure of the vehicle's
         angular velocity around its vertical axis, and it is an important factor in
-        understanding the vehicle's handling and stability during turns.
+        understanding the vehicle's handling and stability during turns. Uses a jerk
+        calculation that is being divided by time to get acceleration of yaw rate, then
+        adding that to yaw rate velocity (Ku).
 
         Args:
-            Cy_f (float): Cornering stiffness of the front tires in N/rad
-            Cy_r (float): Cornering stiffness of the rear tires in N/rad
+            t, (int): Time in seconds
+            Ku, (float): Yaw rate velocity in radians/s
             Vx, (float): Current velocity of car in m/s
             St_a, (float): Current steering angle in radians
             Trr, (float): Current power from rear right wheel in Nm
@@ -255,7 +257,14 @@ def magic_formula(w, p, b=10, c=1.9, d=1, e=.97):
 
 def steering_wheel_angle_to_steering_angle(steering_wheel_angle):
     """
-    Converts steering wheel angle to actual steering angle
+    Converts steering wheel angle to actual steering angle. It uses if statements
+    to determine if input is negative, else it will result in the wrong calculation.
+    
+    Args:
+        steering_wheel_angle (float): Steering *wheel* angle in degrees.
+        
+    Returns:
+        Steering angle in radians.
     """
     if steering_wheel_angle >= 0:
         x = (8.355 * (10**-5)) * (steering_wheel_angle ** 2) + (0.139 * steering_wheel_angle) - 0.03133

@@ -8,10 +8,10 @@
 #define OUTLIER_THRESHOLD 10
 
 typedef struct {
-	unsigned long Difference;
-	unsigned long Frequency;
-	unsigned long IC_Value1;
-	unsigned long IC_Value2;
+	uint32_t Difference;
+	uint32_t Frequency;
+	uint32_t IC_Value1;
+	uint32_t IC_Value2;
 	uint32_t CalculationOK;
 	uint32_t Is_First_Captured;
 	uint32_t outlier_counter;

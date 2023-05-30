@@ -9,12 +9,12 @@
 
 typedef struct {
   uint16_t i; // Steering Angle
-  uint16_t j; // Throttle Input
+  uint16_t j; // Car Velocity
 } LUT_index;
 
 typedef struct {
   float i; // Steering Angle
-  float j; // Throttle Input
+  float j; // Car Velocity
 } LUT_index_float;
 
 typedef struct {
@@ -26,17 +26,17 @@ typedef struct {
 } LUT_index_quad;
 
 #define STEERING_ANGLE_RESOLUTION 13
-#define THROTTLE_PERCENT_RESOLUTION 13
+#define VELOCITY_RESOLUTION 13
 
-extern throttle_percents LUT[STEERING_ANGLE_RESOLUTION][THROTTLE_PERCENT_RESOLUTION];
+extern throttle_percents LUT[STEERING_ANGLE_RESOLUTION][VELOCITY_RESOLUTION];
 
 throttle_percents LUT_lookup(LUT_index in);
 
-LUT_index nearest_index(float steering_angle, float throttle_percent);
-LUT_index_float index_float(float steering_angle, float throttle_percent);
-LUT_index_quad interp_indices(float steering_angle, float throttle_percent);
+LUT_index nearest_index(float steering_angle, float velocity);
+LUT_index_float index_float(float steering_angle, float velocity);
+LUT_index_quad interp_indices(float steering_angle, float velocity);
 
-throttle_percents lookup_nearest(float steering_angle, float throttle_percent);
-throttle_percents lookup_linear(float steering_angle, float throttle_percent);
+throttle_percents lookup_nearest(float steering_angle, float velocity);
+throttle_percents lookup_linear(float steering_angle, float velocity);
 
 #endif

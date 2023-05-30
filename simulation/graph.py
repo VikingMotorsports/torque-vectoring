@@ -34,6 +34,7 @@ def display_graphs(time, ax, ay, wheel_velocity, total_slip, yaw_rate, des_rate)
 
     ax3.plot(time, yaw_rate, label='Yaw Rate')
     ax3.plot(time, des_rate, label='Desired Rate')
+    ax3.set_ylim(-5, 5)
     ax3.set_xlabel('Time (s)')
     ax3.set_ylabel('Yaw Rate (radians/s)')
     ax3.set_title('Yaw Rate and Desired Rate')

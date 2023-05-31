@@ -27,6 +27,7 @@
 #include "comm.h"
 #include "sdlog.h"
 #include "calc.h"
+#include "retarget.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,7 +62,20 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+CAN_RxHeaderTypeDef rxHeader; //CAN Bus Transmit Header
+CAN_TxHeaderTypeDef txHeader; //CAN Bus Receive Header
+uint8_t canRX[6];  //CAN Bus Receive Buffer
+CAN_FilterTypeDef canfil; //CAN Bus Filter
+CAN_FilterTypeDef canfil1; //CAN Bus Filter
+CAN_FilterTypeDef canfil2; //CAN Bus Filter
+CAN_FilterTypeDef canfil3; //CAN Bus Filter
+uint32_t canMailbox; //CAN Bus Mail box variable
 
+int loop;
+uint16_t voltage;
+uint16_t RPM;
+uint16_t current;
+uint16_t power;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -121,7 +135,61 @@ int main(void) {
 	SystemClock_Config();
 
 	/* USER CODE BEGIN SysInit */
+	canfil.FilterMode = CAN_FILTERMODE_IDMASK;
+	  canfil.FilterFIFOAssignment = CAN_RX_FIFO0;
+	  canfil.FilterIdHigh = 0x0A5<<5;
+	  canfil.FilterIdLow = 0;
+	  canfil.FilterMaskIdHigh = 0xFFFF;
+	  canfil.FilterMaskIdLow = 0;
+	  canfil.FilterScale = CAN_FILTERSCALE_32BIT;
+	  canfil.FilterActivation = ENABLE;
 
+		canfil1.FilterBank = 1;
+	  canfil1.FilterMode = CAN_FILTERMODE_IDMASK;
+	  canfil1.FilterFIFOAssignment = CAN_RX_FIFO0;
+	  canfil1.FilterIdHigh = 0x0A6<<5;
+	  canfil1.FilterIdLow = 0;
+	  canfil1.FilterMaskIdHigh = 0xFFFF;
+	  canfil1.FilterMaskIdLow = 0;
+	  canfil1.FilterScale = CAN_FILTERSCALE_32BIT;
+	  canfil1.FilterActivation = ENABLE;
+
+		canfil2.FilterBank = 2;
+	  canfil2.FilterMode = CAN_FILTERMODE_IDMASK;
+	  canfil2.FilterFIFOAssignment = CAN_RX_FIFO0;
+	  canfil2.FilterIdHigh = 0x0A7<<5;
+	  canfil2.FilterIdLow = 0;
+	  canfil2.FilterMaskIdHigh = 0xFFFF;
+	  canfil2.FilterMaskIdLow = 0;
+	  canfil2.FilterScale = CAN_FILTERSCALE_32BIT;
+	  canfil2.FilterActivation = ENABLE;
+
+		canfil3.FilterBank = 3;
+	  canfil3.FilterMode = CAN_FILTERMODE_IDMASK;
+	  canfil3.FilterFIFOAssignment = CAN_RX_FIFO0;
+	  canfil3.FilterIdHigh = 0x0AA<<5;
+	  canfil3.FilterIdLow = 0;
+	  canfil3.FilterMaskIdHigh = 0xFFFF;
+	  canfil3.FilterMaskIdLow = 0;
+	  canfil3.FilterScale = CAN_FILTERSCALE_32BIT;
+	  canfil3.FilterActivation = ENABLE;
+
+
+	  txHeader.DLC = 8;
+	  txHeader.IDE = CAN_ID_STD;
+	  txHeader.RTR = CAN_RTR_DATA;
+	  txHeader.StdId = 0x103;
+	  txHeader.ExtId = 0x02;
+	  txHeader.TransmitGlobalTime = DISABLE;
+
+	  HAL_CAN_ConfigFilter(&hcan1,&canfil);
+	  HAL_CAN_ConfigFilter(&hcan1,&canfil1);
+	  HAL_CAN_ConfigFilter(&hcan1,&canfil2);
+	  HAL_CAN_ConfigFilter(&hcan1,&canfil3);
+
+	  HAL_CAN_Start(&hcan1);
+	  HAL_CAN_ActivateNotification(&hcan1,CAN_IT_RX_FIFO0_MSG_PENDING);
+	  RetargetInit(&huart2);
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
@@ -844,19 +912,47 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 	}
 }
 
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
+	HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rxHeader, canRX);
+	// HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+
+	if (rxHeader.StdId == 0x0A7) {
+		/*for (loop = 0; loop < 8; loop++)
+
+			printf("%d ", canRX[loop]);
+		printf("Receiving data from TxHeader: %u\r\n", rxHeader);*/
+		voltage = ((canRX[1] * 256 + canRX[0]) / 10);
+		//printf("Voltage %d\r\n", voltage);
+
+	}
+	if (rxHeader.StdId == 0x0A5) {
+		/*for (loop = 0; loop < 8; loop++)
+
+			printf("%d ", canRX[loop]);
+		printf("Receiving data from TxHeader: %u\r\n", rxHeader);*/
+		RPM = (canRX[3] * 256 + canRX[2]);
+		//printf("RPM: %d\r\n", RPM);
+
+	}
+	if (rxHeader.StdId == 0x0A6) {
+		/*for (loop = 0; loop < 8; loop++)
+
+			printf("%d ", canRX[loop]);
+		printf("Receiving data from TxHeader: %u\r\n", rxHeader);*/
+		current = ((canRX[7] * 256 + canRX[6]) / 10);
+		//printf("Current %d\r\n", current);
+
+	}
+	power = current * voltage;
+	//printf("Power %d\r\n", power);
+
+}
+
 int __io_putchar(int ch) {
 	uint8_t c[1];
 	c[0] = ch & 0x00FF;
 	HAL_UART_Transmit_IT(&huart2, &*c, sizeof(c));
 	return ch;
-}
-
-int _write(int file, char *ptr, int len) {
-	int DataIdx;
-	for (DataIdx = 0; DataIdx < len; DataIdx++) {
-		__io_putchar(*ptr++);
-	}
-	return len;
 }
 /* USER CODE END 4 */
 

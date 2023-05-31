@@ -27,6 +27,7 @@
 #include "comm.h"
 #include "sdlog.h"
 #include "calc.h"
+#include "retarget.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,7 +62,20 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+CAN_RxHeaderTypeDef rxHeader; //CAN Bus Transmit Header
+CAN_TxHeaderTypeDef txHeader; //CAN Bus Receive Header
+uint8_t canRX[6];  //CAN Bus Receive Buffer
+CAN_FilterTypeDef canfil; //CAN Bus Filter
+CAN_FilterTypeDef canfil1; //CAN Bus Filter
+CAN_FilterTypeDef canfil2; //CAN Bus Filter
+CAN_FilterTypeDef canfil3; //CAN Bus Filter
+uint32_t canMailbox; //CAN Bus Mail box variable
 
+int loop;
+uint16_t voltage;
+uint16_t RPM;
+uint16_t current;
+uint16_t power;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -966,19 +980,47 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 	}
 }
 
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
+	HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rxHeader, canRX);
+	// HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+
+	if (rxHeader.StdId == 0x0A7) {
+		/*for (loop = 0; loop < 8; loop++)
+
+			printf("%d ", canRX[loop]);
+		printf("Receiving data from TxHeader: %u\r\n", rxHeader);*/
+		voltage = ((canRX[1] * 256 + canRX[0]) / 10);
+		//printf("Voltage %d\r\n", voltage);
+
+	}
+	if (rxHeader.StdId == 0x0A5) {
+		/*for (loop = 0; loop < 8; loop++)
+
+			printf("%d ", canRX[loop]);
+		printf("Receiving data from TxHeader: %u\r\n", rxHeader);*/
+		RPM = (canRX[3] * 256 + canRX[2]);
+		//printf("RPM: %d\r\n", RPM);
+
+	}
+	if (rxHeader.StdId == 0x0A6) {
+		/*for (loop = 0; loop < 8; loop++)
+
+			printf("%d ", canRX[loop]);
+		printf("Receiving data from TxHeader: %u\r\n", rxHeader);*/
+		current = ((canRX[7] * 256 + canRX[6]) / 10);
+		//printf("Current %d\r\n", current);
+
+	}
+	power = current * voltage;
+	//printf("Power %d\r\n", power);
+
+}
+
 int __io_putchar(int ch) {
 	uint8_t c[1];
 	c[0] = ch & 0x00FF;
 	HAL_UART_Transmit_IT(&huart2, &*c, sizeof(c));
 	return ch;
-}
-
-int _write(int file, char *ptr, int len) {
-	int DataIdx;
-	for (DataIdx = 0; DataIdx < len; DataIdx++) {
-		__io_putchar(*ptr++);
-	}
-	return len;
 }
 /* USER CODE END 4 */
 

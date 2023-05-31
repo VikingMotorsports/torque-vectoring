@@ -1,20 +1,22 @@
 #include "lut.h"
 
-#define MIN_STEERING_ANGLE (-0.587965415313701)   // constant: -230deg => steering angle
-#define MAX_STEERING_ANGLE  0.527998108411473   // constant:  230deg => steering angle
+#define MIN_STEERING_ANGLE (-0.6356685485304198)   // constant: -230deg => steering angle
+#define MAX_STEERING_ANGLE   0.6345749252211202   // constant:  230deg => steering angle
+#define MIN_VELOCITY 0.5
+#define MAX_VELOCITY 40
 
-throttle_percents LUT[STEERING_ANGLE_RESOLUTION][THROTTLE_PERCENT_RESOLUTION];
+throttle_percents LUT[STEERING_ANGLE_RESOLUTION][VELOCITY_RESOLUTION];
 
 throttle_percents LUT_lookup(LUT_index in)
 {
   return LUT[in.i][in.j];
 }
 
-LUT_index nearest_index(float steering_angle, float throttle_percent)
+LUT_index nearest_index(float steering_angle, float velocity)
 {
   LUT_index_float ref, shifted;
 
-  ref = index_float(steering_angle, throttle_percent);
+  ref = index_float(steering_angle, velocity);
   shifted = (LUT_index_float){
     .i = ref.i + 0.5,
     .j = ref.j + 0.5,
@@ -26,18 +28,19 @@ LUT_index nearest_index(float steering_angle, float throttle_percent)
   };
 }
 
-LUT_index_float index_float(float steering_angle, float throttle_percent)
+LUT_index_float index_float(float steering_angle, float velocity)
 {
   float i, j;
 
-  i = steering_angle; // [min, max)
-  i -= MIN_STEERING_ANGLE; // [0, max - min)
+  i = steering_angle;                           // [min, max)
+  i -= MIN_STEERING_ANGLE;                      // [0, max - min)
   i /= MAX_STEERING_ANGLE - MIN_STEERING_ANGLE; // [0, 1)
-  i *= STEERING_ANGLE_RESOLUTION; // [0, res)
+  i *= STEERING_ANGLE_RESOLUTION;               // [0, res)
 
-  j = throttle_percent; // [0, 100]
-  j /= 100.0; // [0, 1]
-  j *= THROTTLE_PERCENT_RESOLUTION; // [0, res]
+  j = velocity;                                 // [min, max]
+  j -= MIN_VELOCITY;                            // [0, max - min]
+  j /= MAX_VELOCITY - MIN_VELOCITY;             // [0, 1]
+  j *= VELOCITY_RESOLUTION;                     // [0, res]
 
   return (LUT_index_float){
     .i = i,
@@ -45,7 +48,7 @@ LUT_index_float index_float(float steering_angle, float throttle_percent)
   };
 }
 
-LUT_index_quad interp_indices(float steering_angle, float throttle_percent)
+LUT_index_quad interp_indices(float steering_angle, float velocity)
 {
   LUT_index_float ref;
   LUT_index top_left;
@@ -53,7 +56,7 @@ LUT_index_quad interp_indices(float steering_angle, float throttle_percent)
 
   dx = dy = 1;
 
-  ref = index_float(steering_angle, throttle_percent);
+  ref = index_float(steering_angle, velocity);
   top_left = (LUT_index){
     .i = (uint16_t)ref.i,
     .j = (uint16_t)ref.j,
@@ -62,7 +65,7 @@ LUT_index_quad interp_indices(float steering_angle, float throttle_percent)
   if (top_left.i == STEERING_ANGLE_RESOLUTION)
     dx = 0;
 
-  if (top_left.j == THROTTLE_PERCENT_RESOLUTION)
+  if (top_left.j == VELOCITY_RESOLUTION)
     dy = 0;
 
   return (LUT_index_quad){
@@ -74,9 +77,9 @@ LUT_index_quad interp_indices(float steering_angle, float throttle_percent)
   };
 }
 
-throttle_percents lookup_nearest(float steering_angle, float throttle_percent)
+throttle_percents lookup_nearest(float steering_angle, float velocity)
 {
-  LUT_index in = nearest_index(steering_angle, throttle_percent);
+  LUT_index in = nearest_index(steering_angle, velocity);
   return LUT_lookup(in);
 }
 
@@ -86,14 +89,14 @@ float lerp(float a, float b, float t)
   return a*(1-t) + b*t;
 }
 
-throttle_percents lookup_linear(float steering_angle, float throttle_percent)
+throttle_percents lookup_linear(float steering_angle, float velocity)
 {
   LUT_index_quad in;
   LUT_index_float ref;
   throttle_percents top_left, top_right, bottom_left, bottom_right,
                     top, bottom;
   float s, t;
-  in = interp_indices(steering_angle, throttle_percent);
+  in = interp_indices(steering_angle, velocity);
   s = in.ref.i - in.top_left.i;
   t = in.ref.j - in.top_left.j;
 

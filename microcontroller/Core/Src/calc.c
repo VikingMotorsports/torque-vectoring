@@ -55,8 +55,8 @@ throttle_percents convert_power_ratio(float ratio, float throttle_in)
 throttle_percents throttle_percent(uint32_t thr)
 {
 	throttle_percents out;
-	out.left = (thr/4095)*80.0;
-	out.right = (thr/4095)*80.0;
+	out.left = (thr/4095)*100.0;
+	out.right = (thr/4095)*100.0;
 
 	return out;
 }

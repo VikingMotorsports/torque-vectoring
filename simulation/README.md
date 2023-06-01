@@ -3,6 +3,20 @@ This is a Python-based vehicle dynamics simulation tool that predicts the perfor
 physical parameters and driver inputs. The simulation helps in understanding the impact of these parameters on the 
 vehicle's dynamics and control. The results are visualized in graph format for easy interpretation.
 
+### How to Run by Command Line
+1. There are multiple ways of running it. Either through an IDE or command-line. I'll be showing you through command-line.
+2. First open a command prompt. Install python3 by typing python3, or by getting it from here: https://www.python.org/
+3. After that, install a dependency called matplotlib. You can do that by typing: pip install matplotlib
+4. Then, make sure you are in the correct directory for the simulation.py file. You can check by using the 'dir' command.
+5. If not in the correct directory, then use 'cd <directory>' to get where you need to go. Use 'cd..' to go back one directory.
+6. Lastly, once in the correct directory, run 'python3 <filename>' to run the simulation.
+  
+### Changing Parameters
+There is a function near the bottom of the file named: "if __name__ == '__main__':"
+Inside that function will be a 'simulate' function with arguments.
+You can change these as you wish. It will be formatted like so:
+simulate(<car velocity (m/s)>, <wheel velocity (m/s)>, <rear left wheel torque (Nm)>, <rear right wheel torque (Nm)>, <steering angle> (degrees))
+
 ### Features
 1. Calculation of vehicle's yaw rate, yaw moment, lateral velocity, and desired yaw rate based on various physical 
 parameters and driver inputs.
@@ -30,7 +44,8 @@ real-time performance.
 - Radius of the wheel (Rw) in m.
 
 ### Look-Up-Table Generation
-Needs to add some description about Look-Up Table.
+The simulation comes with a file named make_lut.py. Simply running it will create a file that has a table that you can input into the microcontroller.
+The x-axis will represent velocity from 0-80mph and the y-axis will represent steering angle from 230 to -230 degrees.
 
 ### Unit Tests
 In addition to the simulation functions, we have also provided a set of unit tests to validate the correctness of these 

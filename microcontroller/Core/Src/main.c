@@ -28,6 +28,7 @@
 #include "sdlog.h"
 #include "calc.h"
 #include "retarget.h"
+#include "lut.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -248,9 +249,7 @@ int main(void)
 		}
 
 		if (time_fault_check(pedal.time_check) && pedal.time_check_true) {
-			// convert_rpm(raw value goes here)
-
-			// throttle = lookup_table(convert_throttle_input(adc_throttle_buf), steering_wheel_angle_to_steering_angle(adc_steering_buf));
+			throttle = lookup_linear(get_steering_angle_smooth(), convert_rpm(RPM));
 			write_throttle_out(throttle, hdac);
 			// Do torque vectoring
 		} else {
@@ -263,7 +262,6 @@ int main(void)
 			if (time_fault_check(pedal.time_check)) {
 				pedal.time_check_true = 1;
 			}
-			// Output diagnostic light and output APPS SIGNAL.
 		}
 
 		// Write out to SD card

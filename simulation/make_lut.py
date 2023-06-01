@@ -55,7 +55,7 @@ def unwrapArgs(args):
   with lock:
     progress[i][j] = 'x'
     print_progress(progress)
-  return args[0], result
+  return rest[0], result
 
 def simulationInputIterator():
   for i, angle in zip(range(steering_angle_resolution), np.linspace(min_angle, max_angle, steering_angle_resolution)):

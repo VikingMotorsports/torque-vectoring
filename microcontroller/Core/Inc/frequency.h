@@ -4,7 +4,7 @@
 
 
 //Threshold values for outliers
-#define OUTLIER_COUNT 2
+#define OUTLIER_COUNT 3
 #define OUTLIER_THRESHOLD 10
 
 typedef struct {
@@ -19,5 +19,4 @@ typedef struct {
 	uint32_t Good_Frequency;
 } frequency_data;
 
-void freq_init(frequency_data * freq);
 int check_outliers(uint32_t curr_freq, uint32_t incoming_freq);

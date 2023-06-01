@@ -233,9 +233,12 @@ int main(void)
 	while (1) {
 		tim2.CalculationOK = 0;
 		tim5.CalculationOK = 0;
+		printf("%lu\n\r", pedal.time_check);
 		if (!voltage_offset(pedal.first_v, pedal.second_v)
 				|| !voltage_check(pedal.user_v)) {
-			pedal.time_check += 1;
+			if (pedal.time_check < 44444) {
+				pedal.time_check += 1;
+			}
 		} else {
 			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
 				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); //Turn off APPS if already active

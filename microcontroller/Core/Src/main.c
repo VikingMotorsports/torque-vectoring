@@ -250,6 +250,7 @@ int main(void)
 
 		if (time_fault_check(pedal.time_check) && pedal.time_check_true) {
 			throttle = lookup_linear(get_steering_angle_smooth(), convert_rpm(RPM));
+			throttle = throttle_percent(get_throttle_in_smooth());
 			write_throttle_out(throttle, hdac);
 			// Do torque vectoring
 		} else {

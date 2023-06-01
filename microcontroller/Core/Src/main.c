@@ -242,9 +242,10 @@ int main(void)
 			}
 			if (pedal.time_check > 0) {
 				pedal.time_check -= 1;
+				pedal.time_check_true = 0;
 			}
 			if (pedal.time_check == 0) {
-				pedal.time_check_true = 0;
+				pedal.time_check_true = 1;
 			}
 		}
 

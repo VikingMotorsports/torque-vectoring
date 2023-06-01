@@ -1,5 +1,6 @@
 import numpy as np
 import multiprocessing
+import functools
 from simulation import *
 
 # Run simulation with ratios from 0 to 100%
@@ -43,21 +44,47 @@ def makeEntry(angle, velocity):
 
   return l, r
 
-def unwrapArgs(args):
-  print(args)
-  return args[0], makeEntry(*args[1])
+progress_lock = False
+
+def unwrapArgs(progress, args):
+  global progress_lock
+  i, j = args[0]
+  progress[i][j] = 'o'
+  if not progress_lock:
+    print_progress(progress)
+  # print(args)
+  result = makeEntry(*args[1])
+  if not progress_lock:
+    print_progress(progress)
+  progress[i][j] = 'x'
+  return args[0], result
 
 def simulationInputIterator():
   for i, angle in zip(range(steering_angle_resolution), np.linspace(min_angle, max_angle, steering_angle_resolution)):
     for j, velocity in zip(range(velocity_resolution), np.linspace(min_velocity, max_velocity, velocity_resolution)):
       yield (i, j), (angle, velocity)
 
+def print_progress(progress):
+  global progress_lock
+  if progress_lock:
+    return
+
+  progress_lock = True
+  for i, row in enumerate(progress):
+    print("%3d" % i, end=' ')
+    for j, val in enumerate(row):
+      print(val, end=' ')
+    print()
+  progress_lock = False
+
+
 def generate():
   # Prepare empty lut
   lut = [[None for j in range(velocity_resolution)] for i in range(steering_angle_resolution)]
+  progress = [['_' for j in range(velocity_resolution)] for i in range(steering_angle_resolution)]
 
   with multiprocessing.Pool(16) as p:
-    results = p.map(unwrapArgs, simulationInputIterator())
+    results = p.map(functools.partial(unwrapArgs, progress), simulationInputIterator())
     print()
     for (i, j), (l, r) in results:
       lut[i][j] = (l, r)

@@ -1,4 +1,6 @@
 # Torque Vectoring
+![PID](https://github.com/VikingMotorsports/torque-vectoring/actions/workflows/pid.yml/badge.svg)
+![Simulation](https://github.com/VikingMotorsports/torque-vectoring/actions/workflows/simulation.yml/badge.svg)
 
 This repository hosts the codebase for torque vectoring development project for the VMS 3rd generation Formula EV. Torque vectoring pertains to the implementation of  an electronic differential, or e-diff, which is intended to reduce wheel slippage by outputting different power to each wheel’s motor based on information about the state of the vehicle along with the relevant formulas.
 

@@ -1,5 +1,6 @@
 import numpy as np
 import multiprocessing
+import functools
 from simulation import *
 
 # Run simulation with ratios from 0 to 100%
@@ -44,23 +45,48 @@ def makeEntry(angle, velocity):
   return l, r
 
 def unwrapArgs(args):
-  print(args)
-  return args[0], makeEntry(*args[1])
+  lock, progress, rest = args
+  i, j = rest[0]
+  with lock:
+    progress[i][j] = 'o'
+    print_progress(progress)
+  # print(args)
+  result = makeEntry(*rest[1])
+  with lock:
+    progress[i][j] = 'x'
+    print_progress(progress)
+  return rest[0], result
 
 def simulationInputIterator():
   for i, angle in zip(range(steering_angle_resolution), np.linspace(min_angle, max_angle, steering_angle_resolution)):
     for j, velocity in zip(range(velocity_resolution), np.linspace(min_velocity, max_velocity, velocity_resolution)):
       yield (i, j), (angle, velocity)
 
+def print_progress(progress):
+  s = '\n' * 8
+  for i, row in enumerate(progress):
+    s += "%3d " % i
+    for j, val in enumerate(row):
+      s += str(val) + ' '
+    s += '\n'
+
+  print(s)
+
+def init_pool_processes(the_lock):
+  lock = the_lock
+
 def generate():
   # Prepare empty lut
   lut = [[None for j in range(velocity_resolution)] for i in range(steering_angle_resolution)]
 
-  with multiprocessing.Pool(16) as p:
-    results = p.map(unwrapArgs, simulationInputIterator())
-    print()
-    for (i, j), (l, r) in results:
-      lut[i][j] = (l, r)
+  with multiprocessing.Manager() as manager:
+    lock = manager.Lock()
+    progress = manager.list([manager.list(['_' for j in range(velocity_resolution)]) for i in range(steering_angle_resolution)])
+    with multiprocessing.Pool(16) as p:
+      results = p.map(unwrapArgs, map(lambda x: (lock, progress, x), simulationInputIterator()))
+      print()
+      for (i, j), (l, r) in results:
+        lut[i][j] = (l, r)
 
   return lut
 

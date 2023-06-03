@@ -5,7 +5,8 @@
 #define MIN_VELOCITY 0.5
 #define MAX_VELOCITY 40
 
-throttle_percents LUT[STEERING_ANGLE_RESOLUTION][VELOCITY_RESOLUTION];
+throttle_percents LUT[STEERING_ANGLE_RESOLUTION][VELOCITY_RESOLUTION] =
+#include "table.dat"
 
 throttle_percents LUT_lookup(LUT_index in)
 {
@@ -92,7 +93,6 @@ float lerp(float a, float b, float t)
 throttle_percents lookup_linear(float steering_angle, float velocity)
 {
   LUT_index_quad in;
-  LUT_index_float ref;
   throttle_percents top_left, top_right, bottom_left, bottom_right,
                     top, bottom;
   float s, t;

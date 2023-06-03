@@ -966,11 +966,11 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 	uint16_t val;
 
 	val = HAL_ADC_GetValue(hadc);
-	if (hadc == &hadc1) { // Throttle Input
+	if (hadc == &hadc1) { // Throttle Input 1
 		push_adc_buf(&adc_buf1, val);
 		f = convert_throttle_input(val);
 		push_throttle_in_buf(&throttle_buf, f);
-	} else if (hadc == &hadc2) { // Brake pedal sensor
+	} else if (hadc == &hadc2) { // Throttle Input 2
 		push_adc_buf(&adc_buf2, val);
 	} else if (hadc == &hadc3) { // Steering angle sensor, extra analog input
 		push_adc_buf(&adc_buf3, val);

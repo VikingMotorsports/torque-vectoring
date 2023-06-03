@@ -35,8 +35,48 @@ if it is faulty, it will wait 70ms to turn off to reduce random turn offs.
 Measures frequency from front wheels to find the car's velocity. Discards outliers in the incoming frequency.
 
 #### SD Card Logging
+SD Logging is currently currently using SPI as the preffered communications protocol.
 
-Provides functions for logging information to an SD card.
+Write data using the following format:
+snprintf(file_name, file_length, "<type1> - ... - <typeN>", <value1>, ... , <valueN>);
+
+Provides the following functions as it pertains to SD Logging:
+Mount the SD card to begin logging
+sd_mount
+
+Unmount SD card to avoid damage to the card or data saved on the card
+sd_unmount
+
+Scan SD card for a node
+sd_scan
+
+Format SD card from home directory
+sd_format
+
+Write to File
+sd_write
+
+Read File
+sd_read
+
+Check if SD card is saving to the file
+sd_check
+
+Create File
+file_create
+
+Update file on SD card
+file_update
+
+RemoveFile
+file_remove
+
+Create directory in SD card
+create_directory
+
+Check space in SD card
+sd_space_check
+
 
 #### Communications
 

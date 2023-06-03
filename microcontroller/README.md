@@ -40,43 +40,19 @@ SD Logging is currently currently using SPI as the preffered communications prot
 Write data using the following format:
 snprintf(file_name, file_length, "<type1> - ... - <typeN>", <value1>, ... , <valueN>);
 
-Provides the following functions as it pertains to SD Logging:
-Mount the SD card to begin logging
-sd_mount
-
-Unmount SD card to avoid damage to the card or data saved on the card
-sd_unmount
-
-Scan SD card for a node
-sd_scan
-
-Format SD card from home directory
-sd_format
-
-Write to File
-sd_write
-
-Read File
-sd_read
-
-Check if SD card is saving to the file
-sd_check
-
-Create File
-file_create
-
-Update file on SD card
-file_update
-
-RemoveFile
-file_remove
-
-Create directory in SD card
-create_directory
-
-Check space in SD card
-sd_space_check
-
+Provides the following functionality as it pertains to SD Logging:
+*Mount the SD card to begin logging
+*Unmount SD card to avoid damage to the card or data saved on the card
+*Scan SD card for a node
+*Format SD card from home directory
+*Write to File
+*Read File
+*Check if SD card is saving to the file
+*Create File
+*Update file on SD card
+*RemoveFile
+*Create directory in SD card
+*Check space in SD card
 
 #### Communications
 

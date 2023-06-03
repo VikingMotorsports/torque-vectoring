@@ -28,6 +28,7 @@
 #include "sdlog.h"
 #include "calc.h"
 #include "retarget.h"
+#include "lut.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -234,23 +235,25 @@ int main(void)
 		tim5.CalculationOK = 0;
 		if (!voltage_offset(pedal.first_v, pedal.second_v)
 				|| !voltage_check(pedal.user_v)) {
-			pedal.time_check += 1;
+			if (pedal.time_check < 44444) {
+				pedal.time_check += 1;
+			}
 		} else {
 			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
 				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); //Turn off APPS if already active
 			}
 			if (pedal.time_check > 0) {
 				pedal.time_check -= 1;
+				pedal.time_check_true = 0;
 			}
 			if (pedal.time_check == 0) {
-				pedal.time_check_true = 0;
+				pedal.time_check_true = 1;
 			}
 		}
 
 		if (time_fault_check(pedal.time_check) && pedal.time_check_true) {
-			// convert_rpm(raw value goes here)
-
-			// throttle = lookup_table(convert_throttle_input(adc_throttle_buf), steering_wheel_angle_to_steering_angle(adc_steering_buf));
+			throttle = lookup_linear(get_steering_angle_smooth(), convert_rpm(RPM));
+			throttle = throttle_percent(throttle, get_throttle_in_smooth());
 			write_throttle_out(throttle, hdac);
 			// Do torque vectoring
 		} else {
@@ -263,7 +266,6 @@ int main(void)
 			if (time_fault_check(pedal.time_check)) {
 				pedal.time_check_true = 1;
 			}
-			// Output diagnostic light and output APPS SIGNAL.
 		}
 
 		// Write out to SD card

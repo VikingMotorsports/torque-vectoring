@@ -45,7 +45,10 @@ real-time performance.
 
 ### Look-Up-Table Generation
 The simulation comes with a file named make_lut.py. Simply running it will create a file that has a table that you can input into the microcontroller.
-The x-axis will represent velocity from 0-80mph and the y-axis will represent steering angle from 230 to -230 degrees.
+The x-axis will represent velocity from 0-80mph and the y-axis will represent steering angle converted from the steering wheel angle from 230 to
+-230 degrees. The table resolution is controlled by the variables `steering_angle_resolution` and `velocity_resolution`. make_lut.py is multithreaded
+by default, and outputs a visual indicator of the entries being generated. The table is output in C struct initializer format so that it can
+be directly `#include`d into the C code.
 
 ### Unit Tests
 In addition to the simulation functions, we have also provided a set of unit tests to validate the correctness of these 

@@ -77,6 +77,8 @@ uint16_t voltage;
 uint16_t RPM;
 uint16_t current;
 uint16_t power;
+
+uint16_t APPS_ON = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -231,42 +233,36 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
-		tim2.CalculationOK = 0;
-		tim5.CalculationOK = 0;
-		if (!voltage_offset(pedal.first_v, pedal.second_v)
-				|| !voltage_check(pedal.user_v)) {
-			if (pedal.time_check < 44444) {
-				pedal.time_check += 1;
-			}
-		} else {
-			if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
-				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); //Turn off APPS if already active
-			}
-			if (pedal.time_check > 0) {
-				pedal.time_check -= 1;
-				pedal.time_check_true = 0;
-			}
-			if (pedal.time_check == 0) {
-				pedal.time_check_true = 1;
-			}
-		}
 
-		if (time_fault_check(pedal.time_check) && pedal.time_check_true) {
-			throttle = lookup_linear(get_steering_angle_smooth(), convert_rpm(RPM));
-			throttle = throttle_percent(throttle, get_throttle_in_smooth());
-			write_throttle_out(throttle, hdac);
-			// Do torque vectoring
-		} else {
-			throttle.left = 0;
-			throttle.right = 0;
-			write_throttle_out(throttle, hdac);
-			if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
-				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
-			}
-			if (time_fault_check(pedal.time_check)) {
-				pedal.time_check_true = 1;
-			}
-		}
+	        if (!voltage_offset(pedal.first_v, pedal.second_v)
+	                || !voltage_check(pedal.user_v)) {
+	            pedal.time_check += 1;  // INCREMENT FAULT BY 1
+	        } else { // INCREMENT FAULT BY -1 OR RUN
+	            if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
+	                HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); //Turn off APPS if already active (Goes back to normal)
+	                APPS_ON = 0;
+	            }
+	            if (pedal.time_check > 0) {
+	                pedal.time_check -= 1;
+	            }
+	            if (pedal.time_check == 0) {
+	                pedal.time_check_true = 1; // PEDALS ARE GOOD TO GO
+
+	            }
+	        }
+
+	        if (time_fault_check(pedal.time_check) && pedal.time_check_true) {
+	            // WRITE THROTTLE OUT
+	        } else { // ELSE DON'T GIVE CAR ANY THROTTLE
+	            if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7)) {
+	                HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
+	                APPS_ON = 1;
+	            } // TRIGGER APPS SIGNAL
+	            if (time_fault_check(pedal.time_check)) {
+	                pedal.time_check_true = 0;
+	            }
+	    }
+
 
 		// Write out to SD card
 

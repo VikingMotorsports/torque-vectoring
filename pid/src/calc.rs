@@ -1,5 +1,10 @@
 use std::f32::consts;
 
+// PID Parameters
+const POR: f32 = 5.0;
+const INT: f32 = 2.0;
+const DER: f32 = 1.0;
+
 // Gear ratio
 const GR: f32 = 4.1;
 
@@ -38,6 +43,24 @@ const C: f32 = 1.9;
 const D: f32 = 1.0; 
 const E: f32 = 0.97;
 
+fn p(error: f32) -> f32 {
+    let val: f32 = POR * error;
+    val
+}
+
+fn i(error: f32, time: f32) -> f32 {
+    let val: f32 = INT * error * time;
+    val
+}
+
+fn d(error: f32, time: f32, prev_error: f32) -> f32 {
+    if time == 0.0 {
+        return 0.0;
+    }
+    let val: f32 = DER * (error * prev_error) / time;
+    val
+}
+
 fn radians_to_ms(radians: f32) -> f32 {
     return radians * WHEEL_RADIUS;
 }
@@ -52,7 +75,9 @@ fn calculate_desired_yaw_rate(v_cg: f32, delta: f32) -> f32 {
 }
 
 fn calculate_yaw_rate(t: f32, mut ku: f32, vx: f32, st_a: f32, trr: f32, trl: f32) -> f32 {
-    ku += ((((-LF * CY_F + LR * CY_R) / (IZZ * vx)) - ((LF.powf(2.0) * CY_F + LR.powf(2.0) * CY_R) / (IZZ * vx))) * ku + ((LF * CY_F) / IZZ) * st_a + (1.0 / (0.05 * IZZ)) * calculate_delta_torque(trr, trl)) / t;
+    if t > 1.0 {
+        ku += ((((-LF * CY_F + LR * CY_R) / (IZZ * vx)) - ((LF.powf(2.0) * CY_F + LR.powf(2.0) * CY_R) / (IZZ * vx))) * ku + ((LF * CY_F) / IZZ) * st_a + (1.0 / (0.05 * IZZ)) * calculate_delta_torque(trr, trl)) / t;
+    }
     ku
 }
 
@@ -74,8 +99,9 @@ fn calculate_delta_torque(trr: f32, trl: f32) -> f32 {
 fn magic_formula(w: f32, mut p: f32) -> f32 {
 
     p = p - 1.0;
-    let f: f32 = w * D * f32::sin(C * f32::atan(B * p * (1.0 - E) + E * B * p - f32::atan(B * p)));
-    f
+    let f: f32;
+    f = w * D * f32::sin(C * f32::atan(B * p * (1.0 - E) + E * B * p - f32::atan(B * p)));
+    return f
 }
 
 fn steering_wheel_angle_to_steering_angle(steering_wheel_angle: f32) -> f32 {
@@ -84,7 +110,20 @@ fn steering_wheel_angle_to_steering_angle(steering_wheel_angle: f32) -> f32 {
     x
 }
 
-pub fn simulate(mut v_cg: f32, w_velocity: f32, rl_torque_wheel: f32, rr_torque_wheel: f32, mut steering_a: f32) -> (Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>) {
+fn calculate_power_ratio(error: f32, prev_error: f32, time: f32, max_torque: f32) -> (f32, f32) {
+    let mut ratio: f32 = error;
+    ratio += p(error) + i(error, time) + d(error, time, prev_error);
+    if ratio > 1.0 {
+        ratio = 1.0;
+    } if ratio < 0.0 {
+        ratio = 0.0;
+    }
+    let rl_torque_wheel: f32 = ratio * max_torque;
+    let rr_torque_wheel: f32 = (1.0 - ratio) * max_torque;
+    (rl_torque_wheel, rr_torque_wheel)
+}
+
+pub fn simulate(mut v_cg: f32, w_velocity: f32, mut rl_torque_wheel: f32, mut rr_torque_wheel: f32, mut steering_a: f32) -> (Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>) {
     steering_a = steering_wheel_angle_to_steering_angle(steering_a);
     let mut a_x: Vec<f32> = Vec::new();
     a_x.push(v_cg);
@@ -105,16 +144,20 @@ pub fn simulate(mut v_cg: f32, w_velocity: f32, rl_torque_wheel: f32, rr_torque_
     let mut rr_slippage: f32;
     let mut f: f32;
     let mut long_accel: f32;
+    let mut error: f32 = 0.0;
+    let mut prev_error: f32;
+    let max_torque: f32 = rr_torque_wheel + rl_torque_wheel;
 
     for i in 0..1000 {
         rl_wheel_angular_accel = radians_to_ms((2.0 *rl_torque_wheel) / (9.0  * WHEEL_RADIUS));
         rr_wheel_angular_accel = radians_to_ms((2.0 *rr_torque_wheel) / (9.0  * WHEEL_RADIUS));
+        prev_error = error;
         rl_slippage = (v_cg + rl_wheel_angular_accel) / v_cg;
         rr_slippage = (v_cg + rr_wheel_angular_accel) / v_cg;
-        if rl_slippage > 1.0 {
+        if rl_slippage < 1.0 {
             rl_slippage = 1.0;
         }
-        if rr_slippage > 1.0 {
+        if rr_slippage < 1.0 {
             rr_slippage = 1.0;
         }
         f = magic_formula(WEIGHT / 2.0, (rl_slippage + rr_slippage) / 2.0);
@@ -122,6 +165,8 @@ pub fn simulate(mut v_cg: f32, w_velocity: f32, rl_torque_wheel: f32, rr_torque_
         v_cg += long_accel;
         rl_wheel_angular_v = rl_slippage * v_cg;
         rr_wheel_angular_v = rr_slippage * v_cg;
+        error = (curr_yaw_rate[i] - des_yaw_rate[i]) / des_yaw_rate[i];
+        (rl_torque_wheel, rr_torque_wheel) = calculate_power_ratio(error, prev_error, i as f32, max_torque);
         a_x.push(a_x[i] + long_accel);
         wheel_velocity.push((rl_wheel_angular_v + rr_wheel_angular_v) / 2.0);
         a_y.push(calculate_lateral_velocity(v_cg, steering_a));

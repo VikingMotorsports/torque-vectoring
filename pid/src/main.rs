@@ -1,4 +1,4 @@
-mod calc;
+pub mod calc;
 mod graph;
 use std::env;
 

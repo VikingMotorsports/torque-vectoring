@@ -1,15 +1,18 @@
 pub mod calc;
 mod graph;
 use std::env;
+use std::io;
+use std::io::Write;
+use prompted::input;
 
 fn main() -> Result<(), Box<dyn std::error::Error>>
 {
     let args: Vec<_> = env::args().collect(); //collecting arguments
-    let mut a_x: Vec<f32> = Vec::new();
-    let mut a_y: Vec<f32> = Vec::new();
-    let mut wheel_velocity: Vec<f32> = Vec::new();
-    let mut curr_yaw_rate: Vec<f32> = Vec::new();
-    let mut des_yaw_rate: Vec<f32> = Vec::new();
+    let a_x: Vec<f32>;
+    let a_y: Vec<f32>;
+    let wheel_velocity: Vec<f32>;
+    let curr_yaw_rate: Vec<f32>;
+    let des_yaw_rate: Vec<f32>;
 
     if args.len() <= 4 || args.len() > 5 { //Not enough arguments or too little provided
         println!("Error, not enough arguments provided or too many");
@@ -33,8 +36,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
         total_slip.push(((wheel_velocity[i] / a_x[i]) - 1.0) * 100.0);
         i += 1;
     }
-    //println!("{:?}", curr_yaw_rate);
+
     let _yaw = graph::yaw(curr_yaw_rate, des_yaw_rate);
+    let _vel = graph::velocity(a_x, wheel_velocity, a_y, total_slip);
+
+    print!("Do you want to print results out to a CSV file? (1 for yes, 0 for no): ");
+    io::stdout().flush().unwrap();
+    let user_in: String = input!();
+    let user_in2: i32 = user_in.parse().unwrap();
+    if user_in2 == 1 {
+        println!(" MADE CSV FILE ");
+    }
+    
+
     Ok(())
     
 }

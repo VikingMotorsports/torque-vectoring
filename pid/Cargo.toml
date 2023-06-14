@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 plotters = "0.3.4"
+prompted = "0.2.7"

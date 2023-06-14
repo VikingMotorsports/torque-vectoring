@@ -70,12 +70,12 @@ pub fn d(error: f32, time: f32, prev_error: f32) -> f32
 
 pub fn radians_to_ms(radians: f32) -> f32 
 {
-    return radians * WHEEL_RADIUS;
+    radians * WHEEL_RADIUS
 }
 
 pub fn degrees_to_radians(degrees: f32) -> f32 
 {
-    return degrees * (consts::PI / 180.0);
+    degrees * (consts::PI / 180.0)
 }
 
 pub fn calculate_desired_yaw_rate(v_cg: f32, delta: f32) -> f32 
@@ -113,10 +113,9 @@ pub fn calculate_delta_torque(trr: f32, trl: f32) -> f32
 pub fn magic_formula(w: f32, mut p: f32) -> f32 
 {
 
-    p = p - 1.0;
-    let f: f32;
-    f = w * D * f32::sin(C * f32::atan(B * p * (1.0 - E) + E * B * p - f32::atan(B * p)));
-    return f
+    p -= 1.0;
+    let f: f32 = w * D * f32::sin(C * f32::atan(B * p * (1.0 - E) + E * B * p - f32::atan(B * p)));
+    f
 }
 
 pub fn steering_wheel_angle_to_steering_angle(steering_wheel_angle: f32) -> f32 
@@ -137,7 +136,7 @@ pub fn calculate_power_ratio(error: f32, prev_error: f32, time: f32, max_torque:
     let mut ratio: f32 = p(error) + i(error, time) + d(error, time, prev_error);
     ratio = ratio.max(0.0).min(100.0);
     if ratio > 0.0 {
-        ratio = ratio / 100.0;
+        ratio /= 100.0;
     }
     
     let rl_torque_wheel: f32 = ratio * max_torque;
@@ -145,7 +144,9 @@ pub fn calculate_power_ratio(error: f32, prev_error: f32, time: f32, max_torque:
     (rl_torque_wheel, rr_torque_wheel)
 }
 
-pub fn simulate(mut v_cg: f32, w_velocity: f32, mut rl_torque_wheel: f32, mut rr_torque_wheel: f32, mut steering_a: f32) -> (Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>) 
+type Info = (Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>);
+
+pub fn simulate(mut v_cg: f32, w_velocity: f32, mut rl_torque_wheel: f32, mut rr_torque_wheel: f32, mut steering_a: f32) -> Info
 {
     steering_a = steering_wheel_angle_to_steering_angle(steering_a);
     let mut a_x: Vec<f32> = Vec::new();

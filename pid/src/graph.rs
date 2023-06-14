@@ -29,7 +29,7 @@ pub fn yaw(current: Vec<f32>, desired: Vec<f32>) -> Result<(), Box<dyn std::erro
         .configure_mesh()
         .disable_x_mesh()
         .disable_y_mesh()
-        .x_desc("Time (seconds)")
+        .x_desc("Time (microseconds)")
         .y_desc("Yaw Rate (radians/s)")
         .draw()?;
 
@@ -52,6 +52,95 @@ pub fn yaw(current: Vec<f32>, desired: Vec<f32>) -> Result<(), Box<dyn std::erro
 
     // To avoid the IO failure being ignored silently, we manually call the present function
     root.present().expect("Unable to write result to file");
+    println!("Result has been saved to {}", OUT_FILE_NAME);
+
+    Ok(())
+}
+
+pub fn velocity(vehicle: Vec<f32>, wheel: Vec<f32>, horizontal: Vec<f32>, slippage: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> 
+{
+    const OUT_FILE_NAME: &'static str = "velocities.png";
+    let root = BitMapBackend::new(OUT_FILE_NAME, (1024, 768)).into_drawing_area();
+    root.fill(&WHITE)?;
+
+    let vmin = bounds(vehicle.clone(), true);
+    let wmin = bounds(wheel.clone(), true);
+    let hmin = bounds(horizontal.clone(), true);
+    let smin = bounds(slippage.clone(), true);
+    let vmax = bounds(vehicle.clone(), false);
+    let wmax = bounds(wheel.clone(), false);
+    let hmax = bounds(horizontal.clone(), false);
+    let smax = bounds(slippage.clone(), false);
+    let vlen = vehicle.len() - 1;
+    let wlen = wheel.len() - 1;
+    let hlen = horizontal.len() - 1;
+    let slen = slippage.len() - 1;
+
+    let mina: f32 = min_bounds(vmin, wmin);
+    let minb: f32 = min_bounds(hmin, smin);
+    let min: f32 = min_bounds(mina, minb);
+
+    let maxa: f32 = max_bounds(vmax, wmax);
+    let maxb: f32 = max_bounds(hmax, smax);
+    let max: f32 = max_bounds(maxa, maxb);
+
+    let timea: f32 = max_bounds(vlen as f32, wlen as f32);
+    let timeb: f32 = max_bounds(hlen as f32, slen as f32);
+    let time: f32 = max_bounds(timea, timeb);
+
+    let mut chart = ChartBuilder::on(&root)
+        .x_label_area_size(35)
+        .y_label_area_size(45)
+        .right_y_label_area_size(50)
+        .margin(5)
+        .caption("Velocities n' Slippage", ("sans-serif", 50.0).into_font())
+        .build_cartesian_2d(0f32..time, min..max)?
+        .set_secondary_coord(0f32..time, 0f32..100f32);
+
+    chart
+        .configure_mesh()
+        .disable_x_mesh()
+        .disable_y_mesh()
+        .x_desc("Time (microseconds)")
+        .y_desc("Velocity (m/s)")
+        .draw()?;
+
+    chart
+        .configure_secondary_axes()
+        .y_desc("Slippage (%)")
+        .draw()?;
+
+    chart
+        .draw_series(LineSeries::new((0 ..= vlen)
+        .map(|x| (x as f32, vehicle[x as usize])), &GREEN,))?
+        .label("Vehicle Velocity")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &GREEN));
+
+    chart
+        .draw_secondary_series(LineSeries::new((0 ..= wlen)
+        .map(|x| (x as f32, wheel[x as usize])), &BLUE,))?
+        .label("Wheel Velocity")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
+    
+    chart
+        .draw_secondary_series(LineSeries::new((0 ..= hlen)
+        .map(|x| (x as f32, horizontal[x as usize])), &MAGENTA,))?
+        .label("Horizontal Velocity")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &MAGENTA));
+    
+    chart
+        .draw_secondary_series(LineSeries::new((0 ..= slen)
+        .map(|x| (x as f32, slippage[x as usize])), &RED,))?
+        .label("Slippage")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+
+    chart
+        .configure_series_labels()
+        .background_style(&RGBColor(128, 128, 128))
+        .draw()?;
+
+    // To avoid the IO failure being ignored silently, we manually call the present function
+    root.present().expect("Unable to write result to file, please make sure 'plotters-doc-data' dir exists under current dir");
     println!("Result has been saved to {}", OUT_FILE_NAME);
 
     Ok(())

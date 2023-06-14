@@ -36,4 +36,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
     //println!("{:?}", curr_yaw_rate);
     let _yaw = graph::yaw(curr_yaw_rate, des_yaw_rate);
     Ok(())
+    
 }

@@ -4,8 +4,8 @@
 use std::f32::consts;
 
 // PID Parameters
-pub const POR: f32 = 80.0;
-pub const INT: f32 = 0.3;
+pub const POR: f32 = 1000.0;
+pub const INT: f32 = 40.0;
 pub const DER: f32 = 0.0;
 
 // Gear ratio
@@ -38,10 +38,11 @@ pub const CY_F: f32 = 7085.0;
 // Cy_r (float): Cornering stiffness of the rear tires in N/rad
 pub const CY_R: f32 = 7302.0;
 
+// Weight of car multiplied by gravity
 pub const WEIGHT: f32 = M * 9.81;
 
+// Constants for magic formula tire model
 pub const B: f32 = 10.0;
-
 pub const C: f32 = 1.9;
 pub const D: f32 = 1.0; 
 pub const E: f32 = 0.97;
@@ -85,7 +86,7 @@ pub fn calculate_desired_yaw_rate(v_cg: f32, delta: f32) -> f32
 
 pub fn calculate_yaw_rate(t: f32, mut ku: f32, vx: f32, st_a: f32, trr: f32, trl: f32) -> f32 
 {
-    if t > 60.0 { //Starting at time 60 because jerk calculation causes inconsistencies before that time.
+    if t > 20.0 && vx > 2.0 { //Starting at velocity 1.8 because the jerk (change in acceleration) calculation causes inconsistencies before that velocity.
         ku += ((((-LF * CY_F + LR * CY_R) / (IZZ * vx)) - ((LF.powf(2.0) * CY_F + LR.powf(2.0) * CY_R) / (IZZ * vx))) * ku + ((LF * CY_F) / IZZ) * st_a + (1.0 / (0.05 * IZZ)) * calculate_delta_torque(trr, trl)) / t;
     }
     ku
@@ -120,20 +121,25 @@ pub fn magic_formula(w: f32, mut p: f32) -> f32
 
 pub fn steering_wheel_angle_to_steering_angle(steering_wheel_angle: f32) -> f32 
 {
-    let mut x: f32 = 8.355 * 10_f32.powf(-5.0) * steering_wheel_angle.powi(2) + 0.139 * steering_wheel_angle - 0.03133;
+    let mut x: f32;
+    if steering_wheel_angle >= 0.0
+    {
+        x = 8.355 * 10_f32.powf(-5.0) * (steering_wheel_angle.powi(2)) + 0.139 * steering_wheel_angle - 0.03133;
+    } else {
+        x = 8.355 * 10_f32.powf(-5.0) * (-steering_wheel_angle.powi(2)) + 0.139 * steering_wheel_angle - 0.03133;
+    }
     x = degrees_to_radians(x);
     x
 }
 
 pub fn calculate_power_ratio(error: f32, prev_error: f32, time: f32, max_torque: f32) -> (f32, f32) 
 {
-    let mut ratio: f32 = error;
-    ratio += p(error) + i(error, time) + d(error, time, prev_error);
-    if ratio > 1.0 {
-        ratio = 1.0;
-    } if ratio < 0.0 {
-        ratio = 0.0;
+    let mut ratio: f32 = p(error) + i(error, time) + d(error, time, prev_error);
+    ratio = ratio.max(0.0).min(100.0);
+    if ratio > 0.0 {
+        ratio = ratio / 100.0;
     }
+    
     let rl_torque_wheel: f32 = ratio * max_torque;
     let rr_torque_wheel: f32 = (1.0 - ratio) * max_torque;
     (rl_torque_wheel, rr_torque_wheel)
@@ -185,7 +191,7 @@ pub fn simulate(mut v_cg: f32, w_velocity: f32, mut rl_torque_wheel: f32, mut rr
         v_cg += long_accel;
         rl_wheel_angular_v = rl_slippage * v_cg;
         rr_wheel_angular_v = rr_slippage * v_cg;
-        error = (curr_yaw_rate[i] - des_yaw_rate[i]) / des_yaw_rate[i];
+        error = (curr_yaw_rate[i] - des_yaw_rate[i]) / des_yaw_rate[i].abs();
         (rl_torque_wheel, rr_torque_wheel) = calculate_power_ratio(error, prev_error, i as f32, max_torque);
         a_x.push(a_x[i] + long_accel);
         wheel_velocity.push((rl_wheel_angular_v + rr_wheel_angular_v) / 2.0);

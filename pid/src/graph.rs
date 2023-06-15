@@ -96,7 +96,7 @@ pub fn velocity(vehicle: Vec<f32>, wheel: Vec<f32>, horizontal: Vec<f32>, slippa
         .margin(5)
         .caption("Velocities n' Slippage", ("sans-serif", 50.0).into_font())
         .build_cartesian_2d(0f32..time, min..max)?
-        .set_secondary_coord(0f32..time, 0f32..100f32);
+        .set_secondary_coord(0f32..time, min..max);
 
     chart
         .configure_mesh()

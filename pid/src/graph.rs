@@ -1,8 +1,9 @@
 use plotters::prelude::*;
+use std::error::Error;
 
-pub fn yaw(current: Vec<f32>, desired: Vec<f32>) -> Result<(), Box<dyn std::error::Error>>
+pub fn yaw(current: Vec<f32>, desired: Vec<f32>) -> Result<(), Box<dyn Error>>
 {
-    const OUT_FILE_NAME: &'static str = "yawrates.png";
+    const OUT_FILE_NAME: &str = "yawrates.png";
     let root = BitMapBackend::new(OUT_FILE_NAME, (1024, 768)).into_drawing_area();
     root.fill(&WHITE)?;
 
@@ -35,19 +36,19 @@ pub fn yaw(current: Vec<f32>, desired: Vec<f32>) -> Result<(), Box<dyn std::erro
 
     chart
         .draw_series(LineSeries::new((0 ..= cur_len)
-        .map(|x| (x as f32, current[x as usize])), &BLUE,))?
+        .map(|x| (x as f32, current[x])), BLUE,))?
         .label("Actual Yaw Rate")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLUE));
 
     chart
         .draw_secondary_series(LineSeries::new((0 ..= des_len)
-        .map(|x| (x as f32, desired[x as usize])), &RED,))?
+        .map(|x| (x as f32, desired[x])), RED,))?
         .label("Desired Yaw Rate")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], RED));
 
     chart
         .configure_series_labels()
-        .background_style(&RGBColor(128, 128, 128))
+        .background_style(RGBColor(128, 128, 128))
         .draw()?;
 
     // To avoid the IO failure being ignored silently, we manually call the present function
@@ -59,7 +60,7 @@ pub fn yaw(current: Vec<f32>, desired: Vec<f32>) -> Result<(), Box<dyn std::erro
 
 pub fn velocity(vehicle: Vec<f32>, wheel: Vec<f32>, horizontal: Vec<f32>, slippage: Vec<f32>) -> Result<(), Box<dyn std::error::Error>> 
 {
-    const OUT_FILE_NAME: &'static str = "velocities.png";
+    const OUT_FILE_NAME: &str = "velocities.png";
     let root = BitMapBackend::new(OUT_FILE_NAME, (1024, 768)).into_drawing_area();
     root.fill(&WHITE)?;
 
@@ -112,31 +113,31 @@ pub fn velocity(vehicle: Vec<f32>, wheel: Vec<f32>, horizontal: Vec<f32>, slippa
 
     chart
         .draw_series(LineSeries::new((0 ..= vlen)
-        .map(|x| (x as f32, vehicle[x as usize])), &GREEN,))?
+        .map(|x| (x as f32, vehicle[x])), GREEN,))?
         .label("Vehicle Velocity")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &GREEN));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], GREEN));
 
     chart
         .draw_secondary_series(LineSeries::new((0 ..= wlen)
-        .map(|x| (x as f32, wheel[x as usize])), &BLUE,))?
+        .map(|x| (x as f32, wheel[x])), BLUE,))?
         .label("Wheel Velocity")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLUE));
     
     chart
         .draw_secondary_series(LineSeries::new((0 ..= hlen)
-        .map(|x| (x as f32, horizontal[x as usize])), &MAGENTA,))?
+        .map(|x| (x as f32, horizontal[x])), MAGENTA,))?
         .label("Horizontal Velocity")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &MAGENTA));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], MAGENTA));
     
     chart
         .draw_secondary_series(LineSeries::new((0 ..= slen)
-        .map(|x| (x as f32, slippage[x as usize])), &RED,))?
+        .map(|x| (x as f32, slippage[x])), RED,))?
         .label("Slippage")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], RED));
 
     chart
         .configure_series_labels()
-        .background_style(&RGBColor(128, 128, 128))
+        .background_style(RGBColor(128, 128, 128))
         .draw()?;
 
     // To avoid the IO failure being ignored silently, we manually call the present function
@@ -151,11 +152,11 @@ fn min_bounds(cur: f32, des: f32) -> f32
     // determine minimum value for graph bounds
     if cur < des 
     { 
-        return cur; 
+        cur
     }
     else 
     { 
-        return des; 
+        des
     }
 }
 
@@ -164,11 +165,11 @@ fn max_bounds(cur: f32, des: f32) -> f32
     // determine maximum value for graph bounds
     if cur > des 
     { 
-        return cur; 
+        cur
     }
     else 
     { 
-        return des; 
+        des
     }
 }
 

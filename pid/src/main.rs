@@ -1,4 +1,4 @@
-pub mod calc;
+mod calc;
 mod graph;
 mod export;
 use std::env;
@@ -50,8 +50,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>>
     let user_in2: i32 = user_in.parse().unwrap();
     if user_in2 == 1 
     {
-        let _csv = export::csv(curr_yaw_rate.clone(), des_yaw_rate.clone(), a_x.clone(), wheel_velocity.clone(), a_y.clone(), total_slip.clone());
-        //let _csv = export::csv(&curr_yaw_rate, &des_yaw_rate, &a_x, &wheel_velocity, &a_y, &total_slip);
+        let _csv = export::csv(curr_yaw_rate, des_yaw_rate, a_x, wheel_velocity, a_y, total_slip);
         println!(" EXPORTED CSV FILES ");
     }
  
